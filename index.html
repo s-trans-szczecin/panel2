@@ -1,0 +1,76 @@
+\<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Dyspozytora - Monitoring Floty</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; margin: 0; height: 100vh; }
+        #sidebar { width: 350px; background: #2c3e50; color: white; padding: 15px; overflow-y: auto; }
+        #map { flex-grow: 1; }
+        .alert-box { background: #e74c3c; padding: 10px; margin-bottom: 10px; border-radius: 5px; animation: blink 1s infinite; }
+        .log-item { border-bottom: 1px solid #444; padding: 10px 0; font-size: 14px; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.7;} 100% {opacity: 1;} }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Powiadomienia</h2>
+        <div id="alerts"></div> <hr>
+        <h3>Historia zdarzeń</h3>
+        <div id="logs"></div> </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+
+    <script>
+        // 1. Inicjalizacja Mapy
+        const map = L.map('map').setView([52.23, 21.01], 6); // Środek Polski
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        // Słownik markerów (żeby każda kropka na mapie to był konkretny kierowca)
+        const markers = {};
+
+        // 2. Konfiguracja Firebase (TU WKLEISZ SWOJE DANE Z KONSOLI FIREBASE)
+        const firebaseConfig = {
+            apiKey: "TWÓJ_KLUCZ",
+            databaseURL: "https://TWOJA-NAZWA.firebaseio.com",
+            projectId: "TWOJE-ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 3. Odbieranie danych w czasie rzeczywistym
+        db.ref('drivers').on('value', (snapshot) => {
+            const data = snapshot.val();
+            
+            for (let id in data) {
+                const k = data[id];
+                
+                // Aktualizacja pozycji na mapie
+                if (markers[id]) {
+                    markers[id].setLatLng([k.lat, k.lng]);
+                } else {
+                    markers[id] = L.marker([k.lat, k.lng]).addTo(map).bindPopup(id);
+                }
+
+                // Obsługa awarii (wyświetlenie czerwonego pola)
+                if (k.status === "AWARIA") {
+                    document.getElementById('alerts').innerHTML = `
+                        <div class="alert-box">
+                            <strong>⚠️ AWARIA: ${id}</strong><br>
+                            Lokalizacja: ${k.lat}, ${k.lng}
+                        </div>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
