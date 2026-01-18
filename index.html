@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <!-- Leaflet (MAPA) -->
+  <!-- Leaflet (mapa świata) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -20,10 +20,12 @@
       padding: 20px;
     }
     #map { height: 400px; }
+    table { border-collapse: collapse; }
+    th, td { padding: 6px 10px; }
   </style>
 
   <script>
-    // 🔴 FIREBASE CONFIG
+    // ================= FIREBASE =================
     const firebaseConfig = {
       apiKey: "AIzaSyAjkKqpO-3_Ltp3Jofc4oDu81Y5pb2IsQk",
       authDomain: "fir-trans-10591.firebaseapp.com",
@@ -40,6 +42,7 @@
 
     let currentUser = null;
 
+    // ================= START / LOGO / MAPA =================
     function showLogo() {
       document.getElementById("logoScreen").style.display = "block";
       setTimeout(() => {
@@ -52,7 +55,8 @@
       document.getElementById("mapScreen").style.display = "block";
 
       const map = L.map('map').setView([20, 0], 2);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+        .addTo(map);
 
       setTimeout(() => {
         document.getElementById("mapScreen").style.display = "none";
@@ -60,6 +64,7 @@
       }, 3000);
     }
 
+    // ================= LOGOWANIE =================
     function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -69,10 +74,67 @@
           currentUser = user.user;
           document.getElementById("login-container").style.display = "none";
           document.getElementById("panel-container").style.display = "block";
+          loadOrders(); // 🔴 ŁADUJEMY ZLECENIA
         })
         .catch(err => {
           document.getElementById("loginError").innerText = err.message;
         });
+    }
+
+    // ================= PANEL – ZLECENIA =================
+
+    function createOrder() {
+      const title = prompt("Tytuł zlecenia:");
+      if (!title) return;
+
+      const newRef = db.ref("orders").push();
+      newRef.set({
+        title: title,
+        status: "nowe",
+        driverId: ""
+      });
+    }
+
+    function loadOrders() {
+      const table = document.getElementById("ordersTable");
+      table.innerHTML = "";
+
+      db.ref("orders").on("value", snapshot => {
+        table.innerHTML = "";
+        snapshot.forEach(child => {
+          const data = child.val();
+          const id = child.key;
+
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td>${id}</td>
+            <td>${data.title}</td>
+            <td>${data.status}</td>
+            <td>${data.driverId || "-"}</td>
+            <td>
+              <button onclick="setDriver('${id}','001')">001</button>
+              <button onclick="setDriver('${id}','002')">002</button>
+              <button onclick="nextStatus('${id}','${data.status}')">Status</button>
+            </td>
+          `;
+
+          table.appendChild(row);
+        });
+      });
+    }
+
+    function setDriver(id, driver) {
+      db.ref("orders/" + id).update({ driverId: driver });
+    }
+
+    function nextStatus(id, current) {
+      const next =
+        current === "nowe" ? "w trasie" :
+        current === "w trasie" ? "zakończone" :
+        "nowe";
+
+      db.ref("orders/" + id).update({ status: next });
     }
 
     window.onload = showLogo;
@@ -81,25 +143,43 @@
 
 <body>
 
+  <!-- LOGO -->
   <div id="logoScreen">
     <h1>LOGO ANIMOWANE</h1>
   </div>
 
+  <!-- MAPA -->
   <div id="mapScreen">
     <h2>Mapa świata</h2>
     <div id="map"></div>
   </div>
 
+  <!-- LOGOWANIE -->
   <div id="login-container">
     <h2>Logowanie</h2>
-    <input id="email" placeholder="email">
-    <input id="password" type="password" placeholder="hasło">
+    <input id="email" placeholder="email"><br><br>
+    <input id="password" type="password" placeholder="hasło"><br><br>
     <button onclick="login()">Zaloguj</button>
     <p id="loginError" style="color:red"></p>
   </div>
 
+  <!-- PANEL -->
   <div id="panel-container">
-    <h2>Panel (zalogowano)</h2>
+    <h2>Panel zleceń</h2>
+    <button onclick="createOrder()">➕ Nowe zlecenie</button>
+
+    <table border="1" style="margin-top:10px;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tytuł</th>
+          <th>Status</th>
+          <th>Kierowca</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTable"></tbody>
+    </table>
   </div>
 
 </body>
