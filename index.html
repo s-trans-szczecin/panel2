@@ -1,155 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>S-TRANS Panel Admina</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    body { font-family: Arial; margin: 0; padding: 0; }
-    #login-container, #panel-container { padding: 20px; }
-    #driversMap { height: 400px; margin-top: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
-    button { margin: 2px; }
-    h1 { text-align:center; animation: fadeIn 3s infinite; }
-    @keyframes fadeIn { 0%{opacity:0;}50%{opacity:1;}100%{opacity:0;} }
-  </style>
+<meta charset="UTF-8">
+<title>S-TRANS | Panel Admina</title>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-  <!-- Leaflet -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body { margin:0; font-family:Arial; background:#0b0f1a; color:#fff; }
+h1 { text-align:center; padding:20px; letter-spacing:3px; }
+#login, #panel { padding:20px; }
+input, button { padding:10px; margin:5px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+td, th { border:1px solid #333; padding:6px; text-align:center; }
+#map { height:400px; margin-top:20px; }
+</style>
 
-  <script>
-    // Konfiguracja Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyAjkKqpO-3_Ltp3Jofc4oDu81Y5pb2IsQk",
-      authDomain: "fir-trans-10591.firebaseapp.com",
-      databaseURL: "https://fir-trans-10591-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "fir-trans-10591",
-      storageBucket: "fir-trans-10591.appspot.com",
-      messagingSenderId: "454345201943",
-      appId: "1:454345201943:web:panel"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    let map, driverMarkers = {};
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAjkKqpO-3_Ltp3Jofc4oDu81Y5pb2IsQk",
+  authDomain: "fir-trans-10591.firebaseapp.com",
+  databaseURL: "https://fir-trans-10591-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "fir-trans-10591",
+  storageBucket: "fir-trans-10591.appspot.com",
+  messagingSenderId: "454345201943",
+  appId: "1:454345201943:web:panel"
+};
 
-    // Logowanie admin
-    function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      document.getElementById("loginError").innerText = "";
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
-      auth.signInWithEmailAndPassword(email, password)
-        .then((cred) => {
-          const uid = cred.user.uid;
-          db.ref("users/" + uid + "/role").once("value")
-            .then(snapshot => {
-              const role = snapshot.val();
-              if(role === "admin") {
-                document.getElementById("login-container").style.display="none";
-                document.getElementById("panel-container").style.display="block";
-                loadOrders();
-                initDriversMap();
-              } else {
-                alert("Brak przypisanej roli admina");
-                auth.signOut();
-              }
-            });
-        })
-        .catch(err => { document.getElementById("loginError").innerText = err.message; });
-    }
+let map;
+let markers = {};
 
-    // Tabela zleceń
-    function loadOrders() {
-      const table = document.getElementById("ordersTable");
-      table.innerHTML = "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th><th>Akcje</th></tr>";
+function login() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
 
-      db.ref("orders").on("value", snapshot => {
-        table.innerHTML = "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th><th>Akcje</th></tr>";
-        snapshot.forEach(child => {
-          const data = child.val();
-          const id = child.key;
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${id}</td>
-            <td>${data.title}</td>
-            <td>${data.status}</td>
-            <td>${data.driverId || "-"}</td>
-            <td>
-              <button onclick="assignDriver('${id}','001')">001</button>
-              <button onclick="assignDriver('${id}','002')">002</button>
-              <button onclick="nextStatus('${id}','${data.status}')">Status</button>
-            </td>`;
-          table.appendChild(row);
-        });
-      });
-    }
+  auth.signInWithEmailAndPassword(email, pass).then(res => {
+    const uid = res.user.uid;
 
-    function assignDriver(orderId, driverId) {
-      db.ref("orders/"+orderId).update({ driverId });
-    }
+    db.ref("users/" + uid + "/role").once("value").then(snap => {
+      if (snap.val() === "admin") {
+        document.getElementById("login").style.display="none";
+        document.getElementById("panel").style.display="block";
+        loadOrders();
+        initMap();
+      } else {
+        alert("BRAK PRZYPISANEJ ROLI");
+        auth.signOut();
+      }
+    });
+  }).catch(e => alert(e.message));
+}
 
-    function nextStatus(orderId, current) {
-      const next = current==="nowe"?"w trasie":current==="w trasie"?"zakończone":"nowe";
-      db.ref("orders/"+orderId).update({ status: next });
-    }
+function loadOrders() {
+  const t = document.getElementById("orders");
+  t.innerHTML = "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
 
-    // Mapa kierowców
-    function initDriversMap() {
-      map = L.map('driversMap').setView([51.0, 4.0], 6);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+  db.ref("orders").on("value", s => {
+    t.innerHTML = "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
+    s.forEach(c => {
+      const d = c.val();
+      t.innerHTML += `<tr>
+        <td>${c.key}</td>
+        <td>${d.title}</td>
+        <td>${d.status}</td>
+        <td>${d.driverId || "-"}</td>
+      </tr>`;
+    });
+  });
+}
 
-      db.ref("drivers").on("value", snapshot => {
-        snapshot.forEach(child => {
-          const driver = child.val();
-          const id = child.key;
-          if(driverMarkers[id]){
-            driverMarkers[id].setLatLng([driver.lat, driver.lng]);
-          } else {
-            driverMarkers[id] = L.marker([driver.lat, driver.lng]).addTo(map)
-              .bindPopup(driver.name);
-          }
-        });
-      });
-    }
+function initMap() {
+  map = L.map("map").setView([51.3,4.5],6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-    // Dodaj nowe zlecenie
-    function createNewOrder() {
-      const title = prompt("Tytuł zlecenia:");
-      if(!title) return;
-      const newRef = db.ref("orders").push();
-      newRef.set({ title, status:"nowe", driverId:"" });
-    }
-
-  </script>
+  db.ref("drivers").on("value", s => {
+    s.forEach(c => {
+      const d = c.val();
+      if (!markers[c.key]) {
+        markers[c.key] = L.marker([d.lat,d.lng]).addTo(map).bindPopup(d.name);
+      } else {
+        markers[c.key].setLatLng([d.lat,d.lng]);
+      }
+    });
+  });
+}
+</script>
 </head>
+
 <body>
-  <h1>Panel S-TRANS</h1>
 
-  <div id="login-container">
-    <h2>Logowanie Admina</h2>
-    <input type="email" id="email" placeholder="Email"><br>
-    <input type="password" id="password" placeholder="Hasło"><br>
-    <button onclick="login()">Zaloguj</button>
-    <p id="loginError" style="color:red"></p>
-  </div>
+<h1>S‑TRANS</h1>
 
-  <div id="panel-container" style="display:none;">
-    <h2>Zlecenia</h2>
-    <button onclick="createNewOrder()">Nowe Zlecenie</button>
-    <table id="ordersTable"></table>
+<div id="login">
+  <input id="email" placeholder="email"><br>
+  <input id="pass" type="password" placeholder="hasło"><br>
+  <button onclick="login()">ZALOGUJ</button>
+</div>
 
-    <h2>Mapa kierowców</h2>
-    <div id="driversMap"></div>
-  </div>
+<div id="panel" style="display:none">
+  <h2>Zlecenia</h2>
+  <table id="orders"></table>
+
+  <h2>Mapa kierowców</h2>
+  <div id="map"></div>
+</div>
+
 </body>
 </html>
