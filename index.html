@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
 <title>S-TRANS | Panel Admina</title>
 
-<!-- Firebase COMPAT -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -15,350 +14,164 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-  :root{
-    --bg:#051026;
-    --card:#0b1a2b;
-    --accent:#00eaff;
-    --muted:#9fbccf;
-  }
+body {
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0b0f1a;
+  color:#fff;
+}
 
-  html,body { height:100%; margin:0; font-family:Inter,Arial,Helvetica,sans-serif; background:var(--bg); color:#eafcff; }
-  /* CENTERED LOGIN */
-  #loginBox {
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  #loginPanel {
-    width:340px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border:1px solid rgba(0,234,255,0.08);
-    padding:26px;
-    border-radius:12px;
-    box-shadow:0 6px 30px rgba(0,0,0,0.6);
-  }
-  #loginPanel h2 { margin:0 0 12px 0; color:var(--accent); letter-spacing:2px; text-align:center; }
-  #loginPanel input {
-    width:100%; padding:10px; margin-bottom:10px; border-radius:6px;
-    border:1px solid rgba(255,255,255,0.06); background:rgba(0,0,0,0.35); color:#eafcff;
-  }
-  .btn {
-    display:inline-block; width:100%; padding:10px; border-radius:8px;
-    border:none; background:var(--accent); color:#041326; font-weight:700; cursor:pointer;
-  }
-  #loginError{ color:#ffb3b3; min-height:18px; margin-top:8px; font-size:13px; text-align:center; }
+/* LOGIN */
+#loginBox {
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#login {
+  width:300px;
+  background:#111;
+  padding:25px;
+  border-radius:8px;
+}
+#login input {
+  width:100%;
+  padding:8px;
+  margin-bottom:10px;
+}
+button {
+  width:100%;
+  padding:8px;
+  background:#00eaff;
+  border:none;
+  cursor:pointer;
+  font-weight:bold;
+}
+#error { color:red; }
 
-  /* PANEL LAYOUT */
-  #panel {
-    display:none;
-    height:100vh;
-    width:100%;
-    box-sizing:border-box;
-    display:flex; flex-direction:column;
-  }
+/* PANEL */
+#panel {
+  display:none;
+  height:100vh;
+}
+#orders {
+  width:40%;
+  background:#141a2e;
+  padding:10px;
+  overflow:auto;
+}
+#map { width:60%; }
 
-  /* TOPBAR */
-  #topbar {
-    height:64px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 20px;
-    background:linear-gradient(90deg, rgba(0,10,20,0.6), rgba(0,18,30,0.6));
-    border-bottom:1px solid rgba(0,234,255,0.06);
-  }
-  #topbar h1 { margin:0; color:var(--accent); letter-spacing:3px; font-size:18px; }
-  #topbar .controls { display:flex; gap:10px; align-items:center; }
-
-  /* DASHBOARD CARDS */
-  #dashboard {
-    display:flex;
-    gap:12px;
-    padding:14px;
-    background:linear-gradient(180deg, rgba(0,0,0,0.03), transparent);
-  }
-  .card {
-    flex:1;
-    background:var(--card);
-    border-radius:10px;
-    padding:12px;
-    border:1px solid rgba(0,234,255,0.06);
-    box-shadow:0 6px 20px rgba(0,0,0,0.4);
-  }
-  .card h3 { margin:0; font-size:12px; color:#9fefff; letter-spacing:2px; }
-  .card p { margin:8px 0 0 0; font-size:22px; color:#bfffdc; font-weight:700; }
-
-  /* MAIN CONTENT */
-  #main {
-    display:flex;
-    flex:1;
-    min-height:0; /* for flex children scrolling */
-  }
-  #orders {
-    width:40%;
-    padding:12px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-    border-right:1px solid rgba(0,234,255,0.04);
-    overflow:auto;
-  }
-  #map {
-    width:60%;
-    height:100%;
-  }
-
-  /* ORDERS TABLE */
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th, td { padding:10px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.03); }
-  th { background:rgba(0,234,255,0.04); color:var(--muted); font-size:12px; letter-spacing:1px; }
-  tr:hover { background: rgba(0,234,255,0.03); }
-
-  /* SMALL HELP TEXT */
-  .muted { color:var(--muted); font-size:13px; }
-
-  /* RESPONSIVE */
-  @media (max-width:900px){
-    #main { flex-direction:column; }
-    #orders, #map { width:100%; height:50vh; }
-  }
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+th, td {
+  border:1px solid #333;
+  padding:6px;
+}
+th {
+  background:#00eaff;
+  color:#000;
+}
 </style>
 </head>
+
 <body>
 
-  <!-- LOGIN -->
-  <div id="loginBox" aria-hidden="false">
-    <div id="loginPanel" role="region" aria-label="Logowanie">
-      <h2>S-TRANS ADMIN</h2>
-      <input id="emailInput" type="email" placeholder="Email" autocomplete="username" />
-      <input id="passwordInput" type="password" placeholder="Hasło" autocomplete="current-password" />
-      <button id="loginBtn" class="btn">Zaloguj</button>
-      <p id="loginError"></p>
-      <p style="margin-top:8px; font-size:12px; color:rgba(255,255,255,0.6); text-align:center;">Użyj konta admin</p>
-    </div>
+<!-- LOGIN -->
+<div id="loginBox">
+  <div id="login">
+    <h2>Logowanie admina</h2>
+    <input id="email" placeholder="email">
+    <input id="password" type="password" placeholder="hasło">
+    <button onclick="login()">Zaloguj</button>
+    <p id="error"></p>
   </div>
+</div>
 
-  <!-- PANEL -->
-  <div id="panel" aria-hidden="true">
-    <div id="topbar">
-      <h1>S-TRANS • DISPATCH</h1>
-      <div class="controls">
-        <div id="statusText" class="muted">system offline</div>
-        <button id="logoutBtn" class="btn" style="width:auto;padding:8px 12px;">Wyloguj</button>
-      </div>
-    </div>
-
-    <div id="dashboard" role="region" aria-label="Dashboard">
-      <div class="card">
-        <h3>AKTYWNE ZLECENIA</h3>
-        <p id="kpiOrders">0</p>
-      </div>
-      <div class="card">
-        <h3>KIEROWCY ONLINE</h3>
-        <p id="kpiDrivers">0</p>
-      </div>
-      <div class="card">
-        <h3>FLEET STATUS</h3>
-        <p id="kpiFleet">OK</p>
-      </div>
-    </div>
-
-    <div id="main">
-      <div id="orders" aria-label="Zlecenia">
-        <h2 style="margin-top:0">ZLECENIA</h2>
-        <div style="margin-bottom:10px;">
-          <button id="newOrderBtn" class="btn" style="width:auto;padding:8px 10px;">+ Nowe</button>
-          <span style="margin-left:10px;" class="muted">Kliknij by dodać</span>
-        </div>
-        <table id="ordersTable" aria-live="polite"></table>
-      </div>
-
-      <div id="map" role="region" aria-label="Mapa"></div>
-    </div>
+<!-- PANEL -->
+<div id="panel">
+  <div id="orders">
+    <h2>Zlecenia</h2>
+    <table id="ordersTable"></table>
   </div>
+  <div id="map"></div>
+</div>
 
 <script>
-/* ================= FIREBASE INIT ================= */
-const firebaseConfig = {
+/* === FIREBASE === */
+firebase.initializeApp({
   apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain: "fir-trans-projekt.firebaseapp.com",
   databaseURL: "https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "fir-trans-projekt",
-  storageBucket: "fir-trans-projekt.firebasestorage.app",
-  messagingSenderId: "285753383667",
-  appId: "1:285753383667:web:95eaac335c2a1f1f3a3586"
-};
-firebase.initializeApp(firebaseConfig);
+  projectId: "fir-trans-projekt"
+});
+
 const auth = firebase.auth();
 const db = firebase.database();
+let map;
 
-let map = null;
-let markers = {};
-let driversCache = {};
+/* 🔒 WYMUSZENIE LOGINU ZAWSZE */
+auth.signOut();
 
-/* ===== Helpers: DOM refs ===== */
-const loginBox = () => document.getElementById('loginBox');
-const panelEl  = () => document.getElementById('panel');
-const emailEl  = () => document.getElementById('emailInput');
-const passEl   = () => document.getElementById('passwordInput');
-const loginErr = () => document.getElementById('loginError');
-const ordersTable = () => document.getElementById('ordersTable');
-const kpiOrdersEl = () => document.getElementById('kpiOrders');
-const kpiDriversEl = () => document.getElementById('kpiDrivers');
-const statusTextEl = () => document.getElementById('statusText');
+/* === LOGIN === */
+function login(){
+  const email = document.getElementById("email").value;
+  const pass  = document.getElementById("password").value;
+  const err   = document.getElementById("error");
 
-/* ===== UI show/hide ===== */
-function showPanel(){
-  loginBox().style.display = 'none';
-  panelEl().style.display = 'flex';
-  panelEl().setAttribute('aria-hidden','false');
-  loginBox().setAttribute('aria-hidden','true');
-  statusTextEl().innerText = 'system online';
-}
-function showLogin(){
-  loginBox().style.display = 'flex';
-  panelEl().style.display = 'none';
-  panelEl().setAttribute('aria-hidden','true');
-  loginBox().setAttribute('aria-hidden','false');
-  statusTextEl().innerText = 'system offline';
-}
-
-/* ===== Initialize map (once) ===== */
-function initMap(){
-  if(map) return;
-  map = L.map('map').setView([53.4285,14.5528],12); // Szczecin default
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19,
-  }).addTo(map);
-}
-
-/* ===== Load drivers (markers) ===== */
-function loadDrivers(){
-  db.ref('drivers').on('value', snap=>{
-    driversCache = {};
-    snap.forEach(ch=>{
-      const id = ch.key;
-      const v = ch.val();
-      driversCache[id] = v;
-      if(v && v.lat && v.lng){
-        if(markers[id]){
-          markers[id].setLatLng([v.lat, v.lng]);
-          markers[id].getPopup().setContent(v.name || 'Kierowca');
-        } else {
-          markers[id] = L.marker([v.lat, v.lng]).addTo(map).bindPopup(v.name || 'Kierowca');
-        }
-      }
-    });
-    // KPI update
-    kpiDriversEl().innerText = Object.keys(driversCache).length;
-  }, err => console.error('drivers err', err));
-}
-
-/* ===== Load orders ===== */
-function loadOrders(){
-  db.ref('orders').on('value', snap=>{
-    const t = ordersTable();
-    t.innerHTML = '<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>';
-    snap.forEach(ch=>{
-      const id = ch.key;
-      const d = ch.val() || {};
-      const row = document.createElement('tr');
-      const driver = d.driverId ? (driversCache[d.driverId]?.name || d.driverId) : '-';
-      row.innerHTML = `
-        <td>${id}</td>
-        <td>${escapeHtml(d.title || '')}</td>
-        <td>${escapeHtml(d.status || '')}</td>
-        <td>${escapeHtml(driver)}</td>
-      `;
-      t.appendChild(row);
-    });
-    kpiOrdersEl().innerText = snap.numChildren ? snap.numChildren() : Object.keys(snap.val()||{}).length;
-  }, err => console.error('orders err', err));
-}
-
-/* ===== Assign events ===== */
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-document.getElementById('logoutBtn').addEventListener('click', ()=>{
-  auth.signOut().then(()=> {
-    showLogin();
-    // remove listeners to avoid double-binding on re-login
-    db.ref('orders').off();
-    db.ref('drivers').off();
-    // optionally clear map markers
-    if(map){
-      for(const id in markers){ map.removeLayer(markers[id]); }
-      markers = {};
-      driversCache = {};
-    }
-  });
-});
-document.getElementById('newOrderBtn').addEventListener('click', ()=>{
-  const title = prompt('Tytuł zlecenia:');
-  if(title && title.trim()){
-    db.ref('orders').push({ title: title.trim(), status: 'nowe', createdAt: Date.now() });
+  if(!email || !pass){
+    err.innerText = "Podaj email i hasło";
+    return;
   }
-});
-
-/* ===== Login process ===== */
-function doLogin(){
-  loginErr().innerText = '';
-  const email = emailEl().value.trim();
-  const pass  = passEl().value;
-  if(!email || !pass){ loginErr().innerText = 'Podaj email i hasło'; return; }
 
   auth.signInWithEmailAndPassword(email, pass)
-    .then(uc => db.ref('users/'+uc.user.uid).once('value'))
-    .then(snap => {
-      const val = snap.val();
-      if(!snap.exists() || !val || val.role !== 'admin'){
-        loginErr().innerText = 'Brak uprawnień admina';
-        return auth.signOut();
-      }
-      // success
-      showPanel();
-      // init features
-      initMap();
-      loadDrivers();
-      loadOrders();
-      // KPI watchers (keeps counts fresh)
-      db.ref('orders').on('value', s=> kpiOrdersEl().innerText = s.numChildren ? s.numChildren() : Object.keys(s.val()||{}).length);
-      db.ref('drivers').on('value', s=> kpiDriversEl().innerText = s.numChildren ? s.numChildren() : Object.keys(s.val()||{}).length);
+    .then(u=>{
+      return db.ref("users/"+u.user.uid).once("value");
     })
-    .catch(err => {
-      console.error(err);
-      loginErr().innerText = err.message || 'Błąd logowania';
+    .then(snap=>{
+      if(!snap.exists() || snap.val().role !== "admin"){
+        err.innerText = "Brak uprawnień admina";
+        auth.signOut();
+        return;
+      }
+
+      document.getElementById("loginBox").style.display="none";
+      document.getElementById("panel").style.display="flex";
+      initMap();
+      loadOrders();
+    })
+    .catch(e=>{
+      err.innerText = e.message;
     });
 }
 
-/* ===== Auto-detect already logged in ===== */
-auth.onAuthStateChanged(user => {
-  if(user){
-    // verify role then show panel
-    db.ref('users/'+user.uid).once('value').then(snap=>{
-      if(snap.exists() && snap.val().role === 'admin'){
-        showPanel();
-        initMap();
-        loadDrivers();
-        loadOrders();
-      } else {
-        auth.signOut();
-        showLogin();
-      }
-    }).catch(e=>{
-      console.error('auth check err', e);
-      showLogin();
-    });
-  } else {
-    showLogin();
-  }
-});
+/* === MAP === */
+function initMap(){
+  map = L.map("map").setView([53.4285,14.5528],12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
+    .addTo(map);
+}
 
-/* ===== small util ===== */
-function escapeHtml(s){
-  if(!s) return '';
-  return String(s).replace(/[&<>"']/g, function(m){
-    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+/* === ORDERS === */
+function loadOrders(){
+  const t = document.getElementById("ordersTable");
+  db.ref("orders").on("value", snap=>{
+    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
+    snap.forEach(o=>{
+      const d = o.val();
+      t.innerHTML += `
+        <tr>
+          <td>${o.key}</td>
+          <td>${d.title || ""}</td>
+          <td>${d.status || ""}</td>
+        </tr>
+      `;
+    });
   });
 }
 </script>
+
 </body>
 </html>
