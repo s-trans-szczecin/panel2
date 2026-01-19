@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Panel Admina</title>
+<title>S-TRANS | Fleet Control</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -16,9 +16,9 @@
 <style>
 body {
   margin:0;
-  font-family:Arial, sans-serif;
+  font-family:Segoe UI, Arial;
   background:#0b0f1a;
-  color:#fff;
+  color:#eaf6ff;
 }
 
 /* LOGIN */
@@ -29,25 +29,29 @@ body {
   justify-content:center;
 }
 #login {
-  width:300px;
-  background:#111;
+  width:320px;
+  background:linear-gradient(135deg,#0e1325,#060913);
   padding:25px;
-  border-radius:8px;
+  border-radius:10px;
+  box-shadow:0 0 30px rgba(0,234,255,.2);
 }
 #login input {
   width:100%;
-  padding:8px;
+  padding:10px;
   margin-bottom:10px;
+  background:#050814;
+  border:1px solid #1e2a55;
+  color:#fff;
 }
 button {
   width:100%;
-  padding:8px;
+  padding:10px;
   background:#00eaff;
   border:none;
-  cursor:pointer;
   font-weight:bold;
+  cursor:pointer;
 }
-#error { color:red; }
+#error { color:#ff4d4d; }
 
 /* PANEL */
 #panel {
@@ -55,25 +59,35 @@ button {
   height:100vh;
 }
 #orders {
-  width:40%;
-  background:#141a2e;
-  padding:10px;
+  width:38%;
+  background:linear-gradient(180deg,#0d132b,#070b18);
+  padding:12px;
   overflow:auto;
+  border-right:2px solid #0ff2;
 }
-#map { width:60%; }
+#map {
+  width:62%;
+}
 
+/* TABLE */
 table {
   width:100%;
   border-collapse:collapse;
+  font-size:14px;
 }
 th, td {
-  border:1px solid #333;
-  padding:6px;
+  padding:8px;
+  border-bottom:1px solid #1e2a55;
 }
 th {
   background:#00eaff;
   color:#000;
+  position:sticky;
+  top:0;
 }
+.status-nowe { color:#00eaff; }
+.status-wdrodze { color:#ffd500; }
+.status-dostarczone { color:#39ff14; }
 </style>
 </head>
 
@@ -82,7 +96,7 @@ th {
 <!-- LOGIN -->
 <div id="loginBox">
   <div id="login">
-    <h2>Logowanie admina</h2>
+    <h2>Panel Admina</h2>
     <input id="email" placeholder="email">
     <input id="password" type="password" placeholder="hasło">
     <button onclick="login()">Zaloguj</button>
@@ -100,7 +114,7 @@ th {
 </div>
 
 <script>
-/* === FIREBASE === */
+/* FIREBASE */
 firebase.initializeApp({
   apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain: "fir-trans-projekt.firebaseapp.com",
@@ -110,64 +124,91 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 const db = firebase.database();
-let map;
-
-/* 🔒 WYMUSZENIE LOGINU ZAWSZE */
 auth.signOut();
 
-/* === LOGIN === */
-function login(){
-  const email = document.getElementById("email").value;
-  const pass  = document.getElementById("password").value;
-  const err   = document.getElementById("error");
+let map;
+let trucks = {};
 
+/* LOGIN */
+function login(){
+  const email = emailInput.value;
+  const pass  = password.value;
   if(!email || !pass){
-    err.innerText = "Podaj email i hasło";
+    error.innerText="Podaj email i hasło";
     return;
   }
 
   auth.signInWithEmailAndPassword(email, pass)
-    .then(u=>{
-      return db.ref("users/"+u.user.uid).once("value");
-    })
+    .then(u=>db.ref("users/"+u.user.uid).once("value"))
     .then(snap=>{
-      if(!snap.exists() || snap.val().role !== "admin"){
-        err.innerText = "Brak uprawnień admina";
+      if(!snap.exists() || snap.val().role!=="admin"){
+        error.innerText="Brak uprawnień";
         auth.signOut();
         return;
       }
-
-      document.getElementById("loginBox").style.display="none";
-      document.getElementById("panel").style.display="flex";
+      loginBox.style.display="none";
+      panel.style.display="flex";
       initMap();
       loadOrders();
+      initDemoTrucks();
     })
-    .catch(e=>{
-      err.innerText = e.message;
-    });
+    .catch(e=>error.innerText=e.message);
 }
 
-/* === MAP === */
+/* MAP */
 function initMap(){
-  map = L.map("map").setView([53.4285,14.5528],12);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
-    .addTo(map);
+  map = L.map("map").setView([53.4285,14.5528],11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
-/* === ORDERS === */
+/* TRUCK ICON */
+const truckIcon = L.divIcon({
+  html:"🚚",
+  className:"",
+  iconSize:[30,30]
+});
+
+/* DEMO TRUCKS */
+function initDemoTrucks(){
+  const demo = [
+    {id:"T1", lat:53.45, lng:14.50},
+    {id:"T2", lat:53.40, lng:14.60},
+    {id:"T3", lat:53.47, lng:14.58}
+  ];
+
+  demo.forEach(t=>{
+    trucks[t.id]=L.marker([t.lat,t.lng],{icon:truckIcon})
+      .addTo(map)
+      .bindPopup("Ciężarówka "+t.id);
+  });
+
+  setInterval(moveTrucks, 3000);
+}
+
+/* ANIMACJA RUCHU */
+function moveTrucks(){
+  Object.values(trucks).forEach(m=>{
+    const p = m.getLatLng();
+    const lat = p.lat + (Math.random()-0.5)*0.01;
+    const lng = p.lng + (Math.random()-0.5)*0.01;
+    m.setLatLng([lat,lng]);
+  });
+}
+
+/* ORDERS */
 function loadOrders(){
-  const t = document.getElementById("ordersTable");
+  const t = ordersTable;
   db.ref("orders").on("value", snap=>{
     t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
     snap.forEach(o=>{
-      const d = o.val();
-      t.innerHTML += `
+      const d=o.val();
+      const cls = "status-"+(d.status||"nowe");
+      t.innerHTML+=`
         <tr>
           <td>${o.key}</td>
-          <td>${d.title || ""}</td>
-          <td>${d.status || ""}</td>
-        </tr>
-      `;
+          <td>${d.title||""}</td>
+          <td class="${cls}">${d.status||"nowe"}</td>
+        </tr>`;
     });
   });
 }
