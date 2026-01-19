@@ -2,9 +2,9 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Panel Admina</title>
+<title>S-TRANS | Panel Administracyjny</title>
 
-<!-- Firebase COMPAT -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -16,272 +16,264 @@
 <style>
 body {
   margin:0;
-  font-family:Arial;
+  font-family: "Segoe UI", Arial;
   background:#0b0f1a;
-  color:white;
+  color:#fff;
 }
 
-/* === SPLASH === */
-#splash {
-  height:100vh;
-  display:none;
+/* ===== TOP BAR ===== */
+#topbar {
+  height:60px;
+  background:linear-gradient(135deg,#001f3f,#003);
+  display:flex;
   align-items:center;
-  justify-content:center;
-  font-size:48px;
-  letter-spacing:5px;
-  background:linear-gradient(135deg,#0ff,#003);
-  animation:pulse 2s infinite;
-}
-@keyframes pulse {
-  0%{opacity:.4}
-  50%{opacity:1}
-  100%{opacity:.4}
+  justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid rgba(255,255,255,.1);
 }
 
-/* === WELCOME === */
-#welcome {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 9999;
+#topbar h1 {
+  font-size:20px;
+  letter-spacing:3px;
+  color:#00f2ff;
 }
 
-.metropolis-bg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #001f3f, #000);
-  opacity: 0.8;
+#topbar button {
+  background:#ff4d4d;
+  border:none;
+  color:white;
+  padding:6px 12px;
+  border-radius:6px;
+  cursor:pointer;
 }
 
-.logo-container {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 1000px;
-  cursor: pointer;
+/* ===== DASHBOARD ===== */
+#dashboard {
+  display:flex;
+  gap:10px;
+  padding:10px;
 }
 
-.logo-text {
-  font-size: 5rem;
-  font-weight: 900;
-  letter-spacing: 10px;
-  color: rgba(0, 242, 255, 0.25);
-  text-shadow: 0 0 10px #00f2ff, 0 0 20px #39ff14;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  padding: 20px 40px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.1);
-  animation: rotateHolo 8s linear infinite;
-}
-
-@keyframes rotateHolo {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(360deg); }
-}
-
-/* === LOGIN === */
-#login {
-  display:none;
-  padding:40px;
+.card {
+  flex:1;
+  background:rgba(255,255,255,.05);
+  border-radius:10px;
+  padding:15px;
   text-align:center;
 }
 
-/* === PANEL === */
+.card h2 {
+  font-size:28px;
+  margin:0;
+  color:#00f2ff;
+}
+
+.card p {
+  margin:5px 0 0;
+  opacity:.7;
+}
+
+/* ===== PANEL ===== */
 #panel {
   display:none;
-  height:100vh;
+  height:calc(100vh - 60px);
 }
 
 #orders {
-  width:40%;
+  width:45%;
   padding:10px;
-  background: rgba(255,255,255,0.03);
-  backdrop-filter: blur(10px);
+  overflow:auto;
+  border-right:1px solid rgba(255,255,255,.1);
 }
 
 #map {
-  width:60%;
+  width:55%;
 }
 
-/* === TABELA === */
+/* ===== TABLE ===== */
 table {
   width:100%;
   border-collapse:collapse;
-  margin-top:10px;
-  font-size:14px;
+  font-size:13px;
 }
 
 th {
-  background:linear-gradient(135deg,#00f2ff,#003);
-  color:black;
-  padding:10px;
-  font-size:12px;
+  background:#001f3f;
+  padding:8px;
 }
 
 td {
-  padding:10px;
+  padding:8px;
+  text-align:center;
 }
 
 tr:nth-child(even) {
-  background:rgba(255,255,255,0.03);
+  background:rgba(255,255,255,.03);
 }
 
-tr:hover {
-  background:rgba(0,242,255,0.15);
+/* STATUS COLORS */
+.status-nowe { color:#00f2ff; font-weight:bold; }
+.status-wtrakcie { color:#ffcc00; font-weight:bold; }
+.status-zrealizowane { color:#39ff14; font-weight:bold; }
+
+select {
+  background:#0b0f1a;
+  color:white;
+  border:1px solid #00f2ff;
+  border-radius:4px;
 }
 
-.status {
-  background:rgba(0,242,255,0.2);
-  border-radius:6px;
-  padding:4px 8px;
-  font-weight:bold;
-}
-
-/* === BUTTON === */
+/* BUTTON */
 button {
-  background:linear-gradient(135deg,#00f2ff,#003);
+  background:#00f2ff;
   border:none;
-  padding:8px 12px;
+  padding:6px 10px;
   border-radius:6px;
-  font-weight:bold;
   cursor:pointer;
+  font-weight:bold;
 }
 </style>
 
 <script>
-/* === FIREBASE === */
-const firebaseConfig = {
+/* ===== FIREBASE ===== */
+firebase.initializeApp({
   apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain: "fir-trans-projekt.firebaseapp.com",
   databaseURL: "https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "fir-trans-projekt",
-  storageBucket: "fir-trans-projekt.firebasestorage.app",
-  messagingSenderId: "285753383667",
-  appId: "1:285753383667:web:95eaac335c2a1f1f3a3586"
-};
-firebase.initializeApp(firebaseConfig);
+  projectId: "fir-trans-projekt"
+});
 
 const auth = firebase.auth();
 const db = firebase.database();
 
-let map;
-let markers = {};
+let map, markers = {}, driversCache = {};
 
-/* === START === */
-window.onload = () => {
-  document.getElementById("splash").style.display="flex";
-  setTimeout(()=>{
-    document.getElementById("splash").style.display="none";
-  },2000);
-};
-
-/* === LOGO CLICK === */
-document.addEventListener("DOMContentLoaded",()=>{
-  document.querySelector(".logo-container").onclick = () => {
-    const w = document.getElementById("welcome");
-    w.style.transition="opacity .8s";
-    w.style.opacity="0";
-    setTimeout(()=>{
-      w.style.display="none";
-      document.getElementById("login").style.display="block";
-    },800);
-  };
-});
-
-/* === LOGIN === */
+/* ===== LOGIN ===== */
 function login(){
-  const email = emailInput.value;
-  const pass = passwordInput.value;
-
-  auth.signInWithEmailAndPassword(email,pass)
+  auth.signInWithEmailAndPassword(email.value, password.value)
     .then(u=>{
       db.ref("users/"+u.user.uid).once("value").then(s=>{
-        if(!s.exists() || s.val().role!=="admin"){
-          alert("Brak roli ADMIN");
+        if(s.val().role!=="admin"){
+          alert("Brak dostępu");
           auth.signOut();
           return;
         }
-        document.getElementById("login").style.display="none";
-        document.getElementById("panel").style.display="flex";
+        loginBox.style.display="none";
+        panel.style.display="block";
         initMap();
-        loadOrders();
         loadDrivers();
+        loadOrders();
+        loadDashboard();
       });
     })
-    .catch(e=>loginError.innerText=e.message);
+    .catch(e=>err.innerText=e.message);
 }
 
-/* === MAPA === */
+function logout(){
+  auth.signOut();
+  location.reload();
+}
+
+/* ===== MAP ===== */
 function initMap(){
-  map=L.map('map').setView([53.4285,14.5528],13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  map=L.map("map").setView([53.4285,14.5528],12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
-/* === DRIVERS === */
+/* ===== DRIVERS ===== */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
+    driversCache={};
     snap.forEach(d=>{
-      const v=d.val();
-      if(!v.lat||!v.lng)return;
-      if(markers[d.key]) markers[d.key].setLatLng([v.lat,v.lng]);
-      else markers[d.key]=L.marker([v.lat,v.lng]).addTo(map).bindPopup(v.name);
+      driversCache[d.key]=d.val();
+      if(d.val().lat && d.val().lng){
+        if(markers[d.key])
+          markers[d.key].setLatLng([d.val().lat,d.val().lng]);
+        else
+          markers[d.key]=L.marker([d.val().lat,d.val().lng])
+            .addTo(map).bindPopup(d.val().name);
+      }
     });
   });
 }
 
-/* === ORDERS === */
+/* ===== ORDERS ===== */
 function loadOrders(){
-  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
   db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
+    ordersTable.innerHTML=`
+      <tr>
+        <th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th>
+      </tr>`;
     snap.forEach(o=>{
       const d=o.val();
-      ordersTable.insertRow().innerHTML=`
+      const r=ordersTable.insertRow();
+
+      r.innerHTML=`
         <td>${o.key}</td>
         <td>${d.title}</td>
-        <td class="status">${d.status}</td>
-        <td>${d.driverId||"-"}</td>`;
+        <td class="status-${d.status.replace(' ','')}">${d.status}</td>
+        <td>${driverSelect(o.key,d.driverId||"")}</td>`;
     });
   });
+}
+
+function driverSelect(orderId,current){
+  let s=`<select onchange="assignDriver('${orderId}',this.value)">`;
+  s+=`<option value="">-</option>`;
+  for(let id in driversCache){
+    s+=`<option value="${id}" ${id===current?"selected":""}>${driversCache[id].name}</option>`;
+  }
+  return s+="</select>";
+}
+
+function assignDriver(orderId,driverId){
+  db.ref("orders/"+orderId).update({
+    driverId:driverId,
+    status: driverId ? "wtrakcie" : "nowe"
+  });
+}
+
+/* ===== DASHBOARD ===== */
+function loadDashboard(){
+  db.ref("orders").on("value",s=>ordersCount.innerText=s.numChildren());
+  db.ref("drivers").on("value",s=>driversCount.innerText=s.numChildren());
 }
 
 function newOrder(){
   const t=prompt("Tytuł zlecenia");
-  if(t) db.ref("orders").push({title:t,status:"nowe",driverId:""});
+  if(t) db.ref("orders").push({title:t,status:"nowe"});
 }
 </script>
 </head>
 
 <body>
 
-<div id="splash">S-TRANS</div>
-
-<div id="welcome">
-  <div class="metropolis-bg"></div>
-  <div class="logo-container">
-    <div class="logo-text">S-TRANS</div>
-  </div>
-</div>
-
-<div id="login">
-  <h2>Logowanie admina</h2>
-  <input id="emailInput" placeholder="email"><br><br>
-  <input id="passwordInput" type="password" placeholder="hasło"><br><br>
+<div id="loginBox" style="padding:40px;text-align:center">
+  <h2>S-TRANS Admin</h2>
+  <input id="email" placeholder="email"><br><br>
+  <input id="password" type="password" placeholder="hasło"><br><br>
   <button onclick="login()">Zaloguj</button>
-  <p id="loginError" style="color:red"></p>
+  <p id="err" style="color:red"></p>
 </div>
 
 <div id="panel">
-  <div id="orders">
-    <h2>Zlecenia</h2>
-    <button onclick="newOrder()">+ Nowe</button>
-    <table id="ordersTable"></table>
+  <div id="topbar">
+    <h1>S-TRANS LOGISTICS</h1>
+    <button onclick="logout()">Wyloguj</button>
   </div>
-  <div id="map"></div>
+
+  <div id="dashboard">
+    <div class="card"><h2 id="ordersCount">0</h2><p>Zlecenia</p></div>
+    <div class="card"><h2 id="driversCount">0</h2><p>Kierowcy</p></div>
+  </div>
+
+  <div style="display:flex;height:100%">
+    <div id="orders">
+      <button onclick="newOrder()">+ Nowe zlecenie</button>
+      <table id="ordersTable"></table>
+    </div>
+    <div id="map"></div>
+  </div>
 </div>
 
 </body>
