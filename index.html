@@ -3,28 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <title>S-TRANS | Panel Admina</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-body { margin:0; font-family:Arial; background:#0b0f1a; color:#fff; }
-h1 { text-align:center; padding:20px; letter-spacing:3px; }
-#login, #panel { padding:20px; }
-input, button { padding:10px; margin:5px; }
-table { width:100%; border-collapse:collapse; margin-top:10px; }
-td, th { border:1px solid #333; padding:6px; text-align:center; }
-#map { height:400px; margin-top:20px; }
-button { cursor:pointer; }
-</style>
 
-<!-- Firebase -->
+<!-- Firebase COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<style>
+body { margin:0; font-family:Arial; background:#0b0f1a; color:white; }
+#splash, #login, #panel { display:none; }
+#splash {
+  height:100vh; display:flex; align-items:center; justify-content:center;
+  font-size:48px; letter-spacing:5px;
+  background:linear-gradient(135deg,#0ff,#003);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse { 0%{opacity:.4} 50%{opacity:1} 100%{opacity:.4} }
+
+#panel { display:flex; height:100vh; }
+#orders { width:40%; padding:10px; overflow:auto; }
+#map { width:60%; height:100%; }
+
+table { width:100%; border-collapse:collapse; }
+td,th { border:1px solid #444; padding:5px; text-align:center; }
+button { background:#0ff; border:none; padding:5px; cursor:pointer; }
+</style>
+
 <script>
-// Konfiguracja Firebase
+/* === FIREBASE === */
 const firebaseConfig = {
   apiKey: "AIzaSyAjkKqpO-3_Ltp3Jofc4oDu81Y5pb2IsQk",
   authDomain: "fir-trans-10591.firebaseapp.com",
@@ -34,127 +44,121 @@ const firebaseConfig = {
   messagingSenderId: "454345201943",
   appId: "1:454345201943:web:panel"
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
 let map;
-let driverMarkers = {};
+let markers = {};
 
-// Logowanie admin
-function login(){
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("pass").value;
-  document.getElementById("loginError").innerText = "";
+/* === START === */
+window.onload = () => {
+  document.getElementById("splash").style.display="flex";
+  setTimeout(()=>{
+    document.getElementById("splash").style.display="none";
+    document.getElementById("login").style.display="block";
+  },2000);
+};
 
-  auth.signInWithEmailAndPassword(email, pass)
-    .then(res => {
-      const uid = res.user.uid;
-      db.ref("users/" + uid + "/role").once("value").then(snap => {
-        if(snap.val() === "admin"){
-          document.getElementById("login").style.display="none";
-          document.getElementById("panel").style.display="block";
-          loadOrders();
-          initMap();
-          startDriverUpdates();
-        } else {
-          alert("BRAK PRZYPISANEJ ROLI");
-          auth.signOut();
-        }
-      });
-    })
-    .catch(err => { document.getElementById("loginError").innerText = err.message; });
+/* === LOGOWANIE === */
+function login() {
+  auth.signInWithEmailAndPassword(
+    email.value,
+    password.value
+  ).catch(e=>alert(e.message));
 }
 
-// Tabela zleceń live
-function loadOrders(){
-  const t = document.getElementById("orders");
-  t.innerHTML = "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th><th>Akcje</th></tr>";
+/* === AUTORYZACJA ADMINA === */
+auth.onAuthStateChanged(user=>{
+  if(!user) return;
 
-  db.ref("orders").on("value", snapshot => {
-    t.innerHTML = "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th><th>Akcje</th></tr>";
-    snapshot.forEach(c => {
-      const d = c.val();
-      const id = c.key;
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${id}</td>
-        <td>${d.title}</td>
-        <td>${d.status}</td>
-        <td>${d.driverId || "-"}</td>
-        <td>
-          <button onclick="assignDriver('${id}','001')">001</button>
-          <button onclick="assignDriver('${id}','002')">002</button>
-          <button onclick="assignDriver('${id}','003')">003</button>
-          <button onclick="nextStatus('${id}','${d.status}')">Next</button>
-        </td>
-      `;
-      t.appendChild(row);
-    });
+  db.ref("users/"+user.uid).once("value").then(snap=>{
+    if(!snap.exists() || snap.val().role!=="admin"){
+      alert("Brak przypisanej roli ADMIN");
+      auth.signOut();
+      return;
+    }
+    document.getElementById("login").style.display="none";
+    document.getElementById("panel").style.display="flex";
+    initMap();
+    loadOrders();
+    loadDrivers();
   });
-}
+});
 
-// Przypisanie kierowcy do zlecenia
-function assignDriver(orderId, driverId){
-  db.ref("orders/"+orderId).update({ driverId });
-}
-
-// Zmiana statusu zlecenia
-function nextStatus(orderId, current){
-  const next = current==="nowe"?"w trasie":current==="w trasie"?"zakończone":"nowe";
-  db.ref("orders/"+orderId).update({ status: next });
-}
-
-// Mapa kierowców
+/* === MAPA === */
 function initMap(){
-  map = L.map("map").setView([51.3,4.5],6);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-  updateDriverMarkers();
+  map = L.map('map').setView([52,19],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
-// Aktualizacja markerów kierowców
-function updateDriverMarkers(){
-  db.ref("drivers").once("value").then(snap => {
-    snap.forEach(c => {
-      const d = c.val();
-      const id = c.key;
-      if(driverMarkers[id]){
-        driverMarkers[id].setLatLng([d.lat,d.lng]);
+/* === KIEROWCY === */
+function loadDrivers(){
+  db.ref("drivers").on("value", snap=>{
+    snap.forEach(d=>{
+      const id = d.key;
+      const v = d.val();
+      if(!v.lat || !v.lng) return;
+
+      if(markers[id]) {
+        markers[id].setLatLng([v.lat,v.lng]);
       } else {
-        driverMarkers[id] = L.marker([d.lat,d.lng]).addTo(map).bindPopup(d.name);
+        markers[id] = L.marker([v.lat,v.lng])
+          .addTo(map)
+          .bindPopup("Kierowca "+id);
       }
     });
   });
 }
 
-// Start auto-update co minutę
-function startDriverUpdates(){
-  updateDriverMarkers();
-  setInterval(updateDriverMarkers, 60000);
+/* === ZLECENIA === */
+function loadOrders(){
+  const t = ordersTable;
+  t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
+
+  db.ref("orders").on("value", snap=>{
+    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
+    snap.forEach(o=>{
+      const d=o.val();
+      const r=t.insertRow();
+      r.innerHTML=`
+        <td>${o.key}</td>
+        <td>${d.title}</td>
+        <td>${d.status}</td>
+        <td>${d.driverId||"-"}</td>
+      `;
+    });
+  });
 }
 
+function newOrder(){
+  const t=prompt("Tytuł");
+  if(!t) return;
+  db.ref("orders").push({
+    title:t,status:"nowe",driverId:""
+  });
+}
 </script>
-
 </head>
+
 <body>
 
-<h1>S‑TRANS | Panel Admina</h1>
+<div id="splash">S-TRANS</div>
 
 <div id="login">
-  <h2>Logowanie Admin</h2>
-  <input id="email" placeholder="email"><br>
-  <input id="pass" type="password" placeholder="hasło"><br>
-  <button onclick="login()">ZALOGUJ</button>
-  <p id="loginError" style="color:red"></p>
+  <h2>Logowanie admina</h2>
+  <input id="email" placeholder="email"><br><br>
+  <input id="password" type="password" placeholder="hasło"><br><br>
+  <button onclick="login()">Zaloguj</button>
 </div>
 
-<div id="panel" style="display:none;">
-  <h2>Zlecenia</h2>
-  <table id="orders"></table>
-
-  <h2>Mapa kierowców</h2>
+<div id="panel">
+  <div id="orders">
+    <h2>Zlecenia</h2>
+    <button onclick="newOrder()">+ Nowe</button>
+    <table id="ordersTable"></table>
+  </div>
   <div id="map"></div>
 </div>
 
