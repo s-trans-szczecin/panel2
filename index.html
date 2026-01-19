@@ -13,7 +13,243 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<style><!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>S-TRANS | Panel Admina</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
+/* === GLOBAL === */
+body {
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0b0f1a;
+  color:white;
+  overflow:hidden;
+}
+button {
+  background:#00eaff;
+  border:none;
+  padding:8px 14px;
+  cursor:pointer;
+  border-radius:6px;
+  font-weight:bold;
+}
+button:hover { background:#39ff14; }
+
+/* === INTRO === */
+#intro {
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle,#001f3f,#000);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+  flex-direction:column;
+}
+#truck {
+  width:300px;
+  animation:drive 4s forwards;
+}
+@keyframes drive {
+  0% { transform:translateY(0) scale(1); }
+  100% { transform:translateY(-400px) scale(.6); opacity:0; }
+}
+#logo {
+  position:absolute;
+  bottom:120px;
+  text-align:center;
+}
+#logoS {
+  font-size:90px;
+  font-weight:900;
+  color:#00f2ff;
+  animation:spin 3s linear infinite;
+}
+#logoText {
+  margin-top:10px;
+  font-size:26px;
+  letter-spacing:6px;
+  animation:orbit 3s linear infinite;
+}
+@keyframes spin { from{transform:rotateY(0)} to{transform:rotateY(360deg)} }
+@keyframes orbit { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+/* === LOGIN === */
+#loginBox {
+  display:none;
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#login {
+  background:rgba(0,0,0,.7);
+  padding:30px;
+  border-radius:12px;
+  width:300px;
+}
+#login input {
+  width:100%;
+  padding:8px;
+  margin-bottom:10px;
+}
+#error { color:red; }
+
+/* === PANEL === */
+#panel {
+  display:none;
+  height:100vh;
+}
+#orders {
+  width:40%;
+  padding:10px;
+  overflow:auto;
+  background:#10172a;
+}
+#map { width:60%; }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+th,td {
+  border:1px solid #222;
+  padding:6px;
+}
+th {
+  background:#00eaff;
+  color:black;
+}
+tr:nth-child(even){ background:#0e1528; }
+</style>
+
+<script>
+/* === FIREBASE === */
+firebase.initializeApp({
+  apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+  authDomain: "fir-trans-projekt.firebaseapp.com",
+  databaseURL: "https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "fir-trans-projekt"
+});
+const auth = firebase.auth();
+const db = firebase.database();
+
+let map, markers = {};
+
+/* === INTRO === */
+window.onload = ()=>{
+  setTimeout(()=>{
+    document.getElementById("intro").style.display="none";
+    document.getElementById("loginBox").style.display="flex";
+  },4000);
+};
+
+/* === LOGIN === */
+function login(){
+  const email = document.getElementById("email").value;
+  const pass  = document.getElementById("password").value;
+  const err   = document.getElementById("error");
+
+  auth.signInWithEmailAndPassword(email,pass)
+    .then(u=>{
+      db.ref("users/"+u.user.uid).once("value").then(s=>{
+        if(!s.exists() || s.val().role!=="admin"){
+          alert("Brak uprawnień ADMIN");
+          auth.signOut();
+          return;
+        }
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("panel").style.display="flex";
+        initMap(); loadOrders(); loadDrivers();
+      });
+    })
+    .catch(e=> err.innerText=e.message);
+}
+
+/* === MAP === */
+function initMap(){
+  map=L.map("map").setView([53.4285,14.5528],12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+}
+
+/* === DRIVERS === */
+function loadDrivers(){
+  db.ref("drivers").on("value",s=>{
+    s.forEach(d=>{
+      const v=d.val();
+      if(!v.lat) return;
+      if(markers[d.key]) markers[d.key].setLatLng([v.lat,v.lng]);
+      else markers[d.key]=L.marker([v.lat,v.lng]).addTo(map).bindPopup(v.name);
+    });
+  });
+}
+
+/* === ORDERS === */
+function loadOrders(){
+  const t=document.getElementById("ordersTable");
+  db.ref("orders").on("value",s=>{
+    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
+    s.forEach(o=>{
+      const d=o.val();
+      t.innerHTML+=`<tr>
+        <td>${o.key}</td>
+        <td>${d.title}</td>
+        <td>${d.status}</td>
+        <td>${d.driverId||"-"}</td>
+      </tr>`;
+    });
+  });
+}
+</script>
+</head>
+
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <img id="truck" src="https://i.imgur.com/6b7ZQ.png">
+  <div id="logo">
+    <div id="logoS">S</div>
+    <div id="logoText">S-TRANS</div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginBox">
+  <div id="login">
+    <h2>Logowanie admina</h2>
+    <input id="email" placeholder="email">
+    <input id="password" type="password" placeholder="hasło">
+    <button onclick="login()">Zaloguj</button>
+    <p id="error"></p>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+  <div id="orders">
+    <h2>Zlecenia</h2>
+    <table id="ordersTable"></table>
+  </div>
+  <div id="map"></div>
+</div>
+
+</body>
+</html>
+
 /* ================== GLOBAL ================== */
 body {
   margin:0;
