@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Panel Administracyjny</title>
+<title>S-TRANS | Logistics Command Center</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -14,14 +14,96 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
+/* ================== GLOBAL ================== */
 body {
   margin:0;
-  font-family: "Segoe UI", Arial;
+  font-family:"Segoe UI", Arial;
   background:#0b0f1a;
   color:#fff;
 }
 
-/* ===== TOP BAR ===== */
+/* ================== INTRO ================== */
+#intro {
+  position: fixed;
+  inset: 0;
+  background:#000;
+  z-index:9999;
+  overflow:hidden;
+}
+
+/* tło */
+.intro-bg {
+  position:absolute;
+  inset:0;
+  background:url("assets/command-center.jpg") center/cover no-repeat;
+  filter:brightness(.5);
+}
+
+/* ciężarówka odjeżdża */
+.truck-layer {
+  position:absolute;
+  inset:0;
+  background:url("assets/command-center.jpg") center/cover no-repeat;
+  animation:truckAway 4s ease-in-out forwards;
+}
+
+/* logo */
+.logo-orbit {
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  perspective:1200px;
+}
+
+.logo-s {
+  font-size:6rem;
+  font-weight:900;
+  color:#00f2ff;
+  text-shadow:0 0 25px #00f2ff;
+  animation:spinS 3s linear infinite;
+  z-index:5;
+}
+
+.orbit {
+  position:absolute;
+  font-size:2.2rem;
+  font-weight:700;
+  color:rgba(0,242,255,.9);
+  text-shadow:0 0 10px #00f2ff;
+  animation:orbit 6s linear infinite;
+}
+
+.orbit-1{animation-delay:0s}
+.orbit-2{animation-delay:.5s}
+.orbit-3{animation-delay:1s}
+.orbit-4{animation-delay:1.5s}
+.orbit-5{animation-delay:2s}
+.orbit-6{animation-delay:2.5s}
+
+/* animacje */
+@keyframes truckAway {
+  from {transform:scale(1);filter:blur(0);opacity:1}
+  to   {transform:scale(1.6);filter:blur(8px);opacity:.15}
+}
+@keyframes spinS {
+  from{transform:rotateY(0)}
+  to{transform:rotateY(360deg)}
+}
+@keyframes orbit {
+  from{transform:rotate(0) translateX(140px)}
+  to{transform:rotate(360deg) translateX(140px)}
+}
+
+/* ================== LOGIN ================== */
+#login {
+  display:none;
+  text-align:center;
+  padding:40px;
+}
+
+/* ================== TOPBAR ================== */
 #topbar {
   height:60px;
   background:linear-gradient(135deg,#001f3f,#003);
@@ -29,25 +111,15 @@ body {
   align-items:center;
   justify-content:space-between;
   padding:0 20px;
-  border-bottom:1px solid rgba(255,255,255,.1);
 }
 
 #topbar h1 {
-  font-size:20px;
-  letter-spacing:3px;
   color:#00f2ff;
+  letter-spacing:3px;
+  font-size:20px;
 }
 
-#topbar button {
-  background:#ff4d4d;
-  border:none;
-  color:white;
-  padding:6px 12px;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-/* ===== DASHBOARD ===== */
+/* ================== DASHBOARD ================== */
 #dashboard {
   display:flex;
   gap:10px;
@@ -63,17 +135,12 @@ body {
 }
 
 .card h2 {
-  font-size:28px;
   margin:0;
+  font-size:28px;
   color:#00f2ff;
 }
 
-.card p {
-  margin:5px 0 0;
-  opacity:.7;
-}
-
-/* ===== PANEL ===== */
+/* ================== PANEL ================== */
 #panel {
   display:none;
   height:calc(100vh - 60px);
@@ -90,7 +157,7 @@ body {
   width:55%;
 }
 
-/* ===== TABLE ===== */
+/* ================== TABLE ================== */
 table {
   width:100%;
   border-collapse:collapse;
@@ -107,35 +174,22 @@ td {
   text-align:center;
 }
 
-tr:nth-child(even) {
+tr:nth-child(even){
   background:rgba(255,255,255,.03);
 }
 
-/* STATUS COLORS */
-.status-nowe { color:#00f2ff; font-weight:bold; }
-.status-wtrakcie { color:#ffcc00; font-weight:bold; }
-.status-zrealizowane { color:#39ff14; font-weight:bold; }
-
-select {
+select,button {
   background:#0b0f1a;
-  color:white;
+  color:#00f2ff;
   border:1px solid #00f2ff;
-  border-radius:4px;
-}
-
-/* BUTTON */
-button {
-  background:#00f2ff;
-  border:none;
-  padding:6px 10px;
   border-radius:6px;
+  padding:6px;
   cursor:pointer;
-  font-weight:bold;
 }
 </style>
 
 <script>
-/* ===== FIREBASE ===== */
+/* ================== FIREBASE ================== */
 firebase.initializeApp({
   apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain: "fir-trans-projekt.firebaseapp.com",
@@ -145,73 +199,64 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 const db = firebase.database();
+let map, markers={}, driversCache={};
 
-let map, markers = {}, driversCache = {};
+/* ================== INTRO FLOW ================== */
+setTimeout(()=>{
+  const intro=document.getElementById("intro");
+  intro.style.transition="opacity 1s";
+  intro.style.opacity="0";
+  setTimeout(()=>{
+    intro.remove();
+    document.getElementById("login").style.display="block";
+  },1000);
+},4500);
 
-/* ===== LOGIN ===== */
+/* ================== LOGIN ================== */
 function login(){
-  auth.signInWithEmailAndPassword(email.value, password.value)
+  auth.signInWithEmailAndPassword(email.value,password.value)
     .then(u=>{
       db.ref("users/"+u.user.uid).once("value").then(s=>{
-        if(s.val().role!=="admin"){
-          alert("Brak dostępu");
-          auth.signOut();
-          return;
-        }
-        loginBox.style.display="none";
+        if(s.val().role!=="admin"){ alert("Brak dostępu"); return;}
+        login.style.display="none";
         panel.style.display="block";
-        initMap();
-        loadDrivers();
-        loadOrders();
-        loadDashboard();
+        initMap(); loadDrivers(); loadOrders(); loadDashboard();
       });
     })
     .catch(e=>err.innerText=e.message);
 }
 
-function logout(){
-  auth.signOut();
-  location.reload();
-}
-
-/* ===== MAP ===== */
+/* ================== MAP ================== */
 function initMap(){
   map=L.map("map").setView([53.4285,14.5528],12);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
-/* ===== DRIVERS ===== */
+/* ================== DRIVERS ================== */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
     driversCache={};
     snap.forEach(d=>{
       driversCache[d.key]=d.val();
       if(d.val().lat && d.val().lng){
-        if(markers[d.key])
-          markers[d.key].setLatLng([d.val().lat,d.val().lng]);
-        else
-          markers[d.key]=L.marker([d.val().lat,d.val().lng])
-            .addTo(map).bindPopup(d.val().name);
+        if(markers[d.key]) markers[d.key].setLatLng([d.val().lat,d.val().lng]);
+        else markers[d.key]=L.marker([d.val().lat,d.val().lng])
+          .addTo(map).bindPopup(d.val().name);
       }
     });
   });
 }
 
-/* ===== ORDERS ===== */
+/* ================== ORDERS ================== */
 function loadOrders(){
   db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML=`
-      <tr>
-        <th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th>
-      </tr>`;
+    ordersTable.innerHTML="<tr><th>ID</th><th>Zlecenie</th><th>Status</th><th>Kierowca</th></tr>";
     snap.forEach(o=>{
       const d=o.val();
-      const r=ordersTable.insertRow();
-
-      r.innerHTML=`
+      ordersTable.insertRow().innerHTML=`
         <td>${o.key}</td>
         <td>${d.title}</td>
-        <td class="status-${d.status.replace(' ','')}">${d.status}</td>
+        <td>${d.status}</td>
         <td>${driverSelect(o.key,d.driverId||"")}</td>`;
     });
   });
@@ -220,20 +265,19 @@ function loadOrders(){
 function driverSelect(orderId,current){
   let s=`<select onchange="assignDriver('${orderId}',this.value)">`;
   s+=`<option value="">-</option>`;
-  for(let id in driversCache){
+  for(let id in driversCache)
     s+=`<option value="${id}" ${id===current?"selected":""}>${driversCache[id].name}</option>`;
-  }
   return s+="</select>";
 }
 
 function assignDriver(orderId,driverId){
   db.ref("orders/"+orderId).update({
-    driverId:driverId,
-    status: driverId ? "wtrakcie" : "nowe"
+    driverId,
+    status: driverId ? "wtrakcie":"nowe"
   });
 }
 
-/* ===== DASHBOARD ===== */
+/* ================== DASHBOARD ================== */
 function loadDashboard(){
   db.ref("orders").on("value",s=>ordersCount.innerText=s.numChildren());
   db.ref("drivers").on("value",s=>driversCount.innerText=s.numChildren());
@@ -248,7 +292,23 @@ function newOrder(){
 
 <body>
 
-<div id="loginBox" style="padding:40px;text-align:center">
+<!-- INTRO -->
+<div id="intro">
+  <div class="intro-bg"></div>
+  <div class="truck-layer"></div>
+  <div class="logo-orbit">
+    <div class="logo-s">S</div>
+    <div class="orbit orbit-1">-</div>
+    <div class="orbit orbit-2">T</div>
+    <div class="orbit orbit-3">R</div>
+    <div class="orbit orbit-4">A</div>
+    <div class="orbit orbit-5">N</div>
+    <div class="orbit orbit-6">S</div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
   <h2>S-TRANS Admin</h2>
   <input id="email" placeholder="email"><br><br>
   <input id="password" type="password" placeholder="hasło"><br><br>
@@ -256,10 +316,10 @@ function newOrder(){
   <p id="err" style="color:red"></p>
 </div>
 
+<!-- PANEL -->
 <div id="panel">
   <div id="topbar">
     <h1>S-TRANS LOGISTICS</h1>
-    <button onclick="logout()">Wyloguj</button>
   </div>
 
   <div id="dashboard">
@@ -269,7 +329,7 @@ function newOrder(){
 
   <div style="display:flex;height:100%">
     <div id="orders">
-      <button onclick="newOrder()">+ Nowe zlecenie</button>
+      <button onclick="newOrder()">+ Nowe</button>
       <table id="ordersTable"></table>
     </div>
     <div id="map"></div>
