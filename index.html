@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>S-TRANS | Panel Admina</title>
 
-<!-- Firebase COMPAT SDK -->
+<!-- Firebase COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -18,7 +18,7 @@ body { margin:0; font-family:Arial; background:#0b0f1a; color:white; }
 #splash, #login, #panel { display:none; }
 #splash {
   height:100vh; display:flex; align-items:center; justify-content:center;
-  font-size:60px; letter-spacing:5px;
+  font-size:48px; letter-spacing:5px;
   background:linear-gradient(135deg,#0ff,#003);
   animation:pulse 2s infinite;
 }
@@ -31,11 +31,11 @@ body { margin:0; font-family:Arial; background:#0b0f1a; color:white; }
 table { width:100%; border-collapse:collapse; }
 td,th { border:1px solid #444; padding:5px; text-align:center; }
 button { background:#0ff; border:none; padding:5px; cursor:pointer; }
-input { padding:5px; width:90%; margin-bottom:10px; }
+input { padding:5px; width:80%; margin-bottom:5px; }
 </style>
 
 <script>
-/* === FIREBASE CONFIG === */
+/* === FIREBASE === */
 const firebaseConfig = {
   apiKey: "AIzaSyAjkKqpO-3_Ltp3Jofc4oDu81Y5pb2IsQk",
   authDomain: "fir-trans-10591.firebaseapp.com",
@@ -53,16 +53,16 @@ const db = firebase.database();
 let map;
 let markers = {};
 
-/* === START: logo animowane === */
+/* === START === */
 window.onload = () => {
-  document.getElementById("splash").style.display = "flex";
+  document.getElementById("splash").style.display="flex";
   setTimeout(()=>{
-    document.getElementById("splash").style.display = "none";
-    document.getElementById("login").style.display = "block";
+    document.getElementById("splash").style.display="none";
+    document.getElementById("login").style.display="block";
   },2000);
 };
 
-/* === LOGOWANIE ADMINA === */
+/* === LOGOWANIE === */
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 
@@ -74,15 +74,17 @@ function login() {
     .then(userCredential => {
       const user = userCredential.user;
 
+      // Sprawdzenie roli admina
       db.ref("users/" + user.uid).once("value").then(snap => {
-        if (!snap.exists() || snap.val().role !== "admin") {
+        if(!snap.exists() || snap.val().role!=="admin"){
           alert("Brak przypisanej roli ADMIN");
           auth.signOut();
           return;
         }
-        // Pokaż panel po zalogowaniu
-        document.getElementById("login").style.display = "none";
-        document.getElementById("panel").style.display = "flex";
+
+        // Pokaz panel
+        document.getElementById("login").style.display="none";
+        document.getElementById("panel").style.display="flex";
 
         loadOrders();
         initMap();
@@ -96,10 +98,8 @@ function login() {
 
 /* === MAPA === */
 function initMap(){
-  map = L.map('map').setView([53.4285, 14.5528], 12); // Szczecin
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+  map = L.map('map').setView([53.4285,14.5528],13); // Szczecin
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
 /* === KIEROWCY === */
@@ -110,7 +110,7 @@ function loadDrivers(){
       const v = d.val();
       if(!v.lat || !v.lng) return;
 
-      if(markers[id]) {
+      if(markers[id]){
         markers[id].setLatLng([v.lat,v.lng]);
       } else {
         markers[id] = L.marker([v.lat,v.lng])
@@ -123,7 +123,7 @@ function loadDrivers(){
 
 /* === ZLECENIA === */
 function loadOrders(){
-  const t = document.getElementById("ordersTable");
+  const t = ordersTable;
   t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
 
   db.ref("orders").on("value", snap=>{
@@ -142,19 +142,17 @@ function loadOrders(){
 }
 
 function newOrder(){
-  const t=prompt("Tytuł nowego zlecenia:");
+  const t = prompt("Tytuł zlecenia:");
   if(!t) return;
-  db.ref("orders").push({title:t,status:"nowe",driverId:""});
+  db.ref("orders").push({ title:t, status:"nowe", driverId:"" });
 }
 </script>
 </head>
 
 <body>
 
-<!-- LOGO START -->
 <div id="splash">S-TRANS</div>
 
-<!-- LOGOWANIE -->
 <div id="login">
   <h2>Logowanie admina</h2>
   <input id="email" placeholder="email"><br>
@@ -163,7 +161,6 @@ function newOrder(){
   <p id="loginError" style="color:red;"></p>
 </div>
 
-<!-- PANEL -->
 <div id="panel">
   <div id="orders">
     <h2>Zlecenia</h2>
