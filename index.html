@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>S-TRANS | Panel Admina</title>
 
-<!-- Firebase COMPAT (łatwiejsze dla demo) -->
+<!-- Firebase COMPAT -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -34,15 +34,16 @@ button { background:#0ff; border:none; padding:5px; cursor:pointer; }
 </style>
 
 <script>
-/* === FIREBASE === */
+/* === FIREBASE KONFIGURACJA (panel-admina) === */
 const firebaseConfig = {
-  apiKey: "AIzaSyAjkKqpO-3_Ltp3Jofc4oDu81Y5pb2IsQk",
-  authDomain: "fir-trans-10591.firebaseapp.com",
-  databaseURL: "https://fir-trans-10591-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "fir-trans-10591",
-  storageBucket: "fir-trans-10591.appspot.com",
-  messagingSenderId: "454345201943",
-  appId: "1:454345201943:web:panel"
+  apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+  authDomain: "fir-trans-projekt.firebaseapp.com",
+  databaseURL: "https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "fir-trans-projekt",
+  storageBucket: "fir-trans-projekt.firebasestorage.app",
+  messagingSenderId: "285753383667",
+  appId: "1:285753383667:web:95eaac335c2a1f1f3a3586",
+  measurementId: "G-DSEY52E77K"
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -73,7 +74,6 @@ function login() {
   auth.signInWithEmailAndPassword(email, password)
     .then(userCredential => {
       const user = userCredential.user;
-      // sprawdzamy rolę w DB
       db.ref("users/"+user.uid).once("value").then(snap=>{
         if(!snap.exists() || snap.val().role!=="admin"){
           alert("Brak przypisanej roli ADMIN");
@@ -102,7 +102,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 /* === MAPA === */
 function initMap(){
-  map = L.map('map').setView([53.4285,14.5528],13);
+  map = L.map('map').setView([53.4285,14.5528],13); // Szczecin
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
