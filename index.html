@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>S-TRANS | Panel Admina</title>
 
-<!-- Firebase COMPAT -->
+<!-- Firebase COMPAT (łatwiejsze dla demo) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -31,7 +31,6 @@ body { margin:0; font-family:Arial; background:#0b0f1a; color:white; }
 table { width:100%; border-collapse:collapse; }
 td,th { border:1px solid #444; padding:5px; text-align:center; }
 button { background:#0ff; border:none; padding:5px; cursor:pointer; }
-input { padding:5px; width:80%; margin-bottom:5px; }
 </style>
 
 <script>
@@ -45,7 +44,6 @@ const firebaseConfig = {
   messagingSenderId: "454345201943",
   appId: "1:454345201943:web:panel"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
@@ -63,42 +61,48 @@ window.onload = () => {
 };
 
 /* === LOGOWANIE === */
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-
 function login() {
-  const email = emailInput.value;
-  const password = passwordInput.value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  if(!email || !password){
+    document.getElementById('loginError').innerText = "Wpisz email i hasło!";
+    return;
+  }
 
   auth.signInWithEmailAndPassword(email, password)
     .then(userCredential => {
       const user = userCredential.user;
-
-      // Sprawdzenie roli admina
-      db.ref("users/" + user.uid).once("value").then(snap => {
+      // sprawdzamy rolę w DB
+      db.ref("users/"+user.uid).once("value").then(snap=>{
         if(!snap.exists() || snap.val().role!=="admin"){
           alert("Brak przypisanej roli ADMIN");
           auth.signOut();
           return;
         }
-
-        // Pokaz panel
         document.getElementById("login").style.display="none";
         document.getElementById("panel").style.display="flex";
-
-        loadOrders();
         initMap();
+        loadOrders();
         loadDrivers();
       });
     })
-    .catch(error => {
-      document.getElementById("loginError").innerText = error.message;
+    .catch(err=>{
+      document.getElementById('loginError').innerText = err.message;
     });
 }
 
+// Enter w polu hasła
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('loginBtn').addEventListener('click', login);
+  document.getElementById('password').addEventListener('keyup', e=>{
+    if(e.key==='Enter') login();
+  });
+});
+
 /* === MAPA === */
 function initMap(){
-  map = L.map('map').setView([53.4285,14.5528],13); // Szczecin
+  map = L.map('map').setView([53.4285,14.5528],13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
@@ -110,7 +114,7 @@ function loadDrivers(){
       const v = d.val();
       if(!v.lat || !v.lng) return;
 
-      if(markers[id]){
+      if(markers[id]) {
         markers[id].setLatLng([v.lat,v.lng]);
       } else {
         markers[id] = L.marker([v.lat,v.lng])
@@ -142,22 +146,22 @@ function loadOrders(){
 }
 
 function newOrder(){
-  const t = prompt("Tytuł zlecenia:");
+  const t=prompt("Tytuł zlecenia");
   if(!t) return;
-  db.ref("orders").push({ title:t, status:"nowe", driverId:"" });
+  db.ref("orders").push({title:t,status:"nowe",driverId:""});
 }
 </script>
-</head>
 
+</head>
 <body>
 
 <div id="splash">S-TRANS</div>
 
 <div id="login">
   <h2>Logowanie admina</h2>
-  <input id="email" placeholder="email"><br>
-  <input id="password" type="password" placeholder="hasło"><br>
-  <button onclick="login()">Zaloguj</button>
+  <input id="email" placeholder="email"><br><br>
+  <input id="password" type="password" placeholder="hasło"><br><br>
+  <button id="loginBtn">Zaloguj</button>
   <p id="loginError" style="color:red;"></p>
 </div>
 
