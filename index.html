@@ -1,217 +1,29 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8">
-<title>S-TRANS | Panel Admina</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<style>
-body {
-  margin:0;
-  font-family:Arial;
-  background:#0b0f1a;
-  color:white;
-}
-
-/* === INTRO === */
-#intro {
-  position:fixed;
-  inset:0;
-  background:linear-gradient(135deg,#001f3f,#000);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
-
-#truck {
-  font-size:80px;
-  animation:drive 3s linear infinite;
-}
-@keyframes drive {
-  0% { transform:translateX(-200px); }
-  100% { transform:translateX(200px); }
-}
-
-#logo {
-  margin-top:20px;
-  cursor:pointer;
-}
-#logoS {
-  font-size:80px;
-  font-weight:900;
-  animation:spin 2s linear infinite;
-}
-@keyframes spin {
-  from{transform:rotateY(0deg);}
-  to{transform:rotateY(360deg);}
-}
-#logoText {
-  text-align:center;
-  letter-spacing:6px;
-}
-
-/* === LOGIN === */
-#loginBox {
-  display:none;
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#login {
-  background:#111;
-  padding:25px;
-  border-radius:10px;
-  width:280px;
-}
-#login input {
-  width:100%;
-  margin-bottom:10px;
-  padding:8px;
-}
-button {
-  width:100%;
-  padding:8px;
-  background:#00eaff;
-  border:none;
-  cursor:pointer;
-}
-#error { color:red; }
-
-/* === PANEL === */
-#panel {
-  display:none;
-  height:100vh;
-}
-#orders {
-  width:40%;
-  padding:10px;
-  background:#10172a;
-  overflow:auto;
-}
-#map { width:60%; }
-
-table {
-  width:100%;
-  border-collapse:collapse;
-}
-td,th {
-  border:1px solid #333;
-  padding:5px;
-}
-th {
-  background:#00eaff;
-  color:black;
-}
-</style>
-</head>
-
-<body>
-
-<!-- INTRO -->
-<div id="intro">
-  <div id="truck">🚚</div>
-  <div id="logo" onclick="showLogin()">
-    <div id="logoS">S</div>
-    <div id="logoText">S-TRANS</div>
-    <p>(kliknij logo)</p>
-  </div>
-</div>
-
-<!-- LOGIN -->
-<div id="loginBox">
-  <div id="login">
-    <h3>Logowanie admina</h3>
-    <input id="email" placeholder="email">
-    <input id="password" type="password" placeholder="hasło">
-    <button onclick="login()">Zaloguj</button>
-    <p id="error"></p>
-  </div>
-</div>
-
-<!-- PANEL -->
 <div id="panel">
-  <div id="orders">
-    <h2>Zlecenia</h2>
-    <table id="ordersTable"></table>
+  <div id="header">
+    <h1>S-TRANS <span>LIVE</span></h1>
+    <div>🟢 system online</div>
   </div>
-  <div id="map"></div>
+
+  <div id="dashboard">
+    <div class="card">
+      <h3>Aktywne zlecenia</h3>
+      <p id="kpiOrders">0</p>
+    </div>
+    <div class="card">
+      <h3>Kierowcy</h3>
+      <p id="kpiDrivers">0</p>
+    </div>
+    <div class="card">
+      <h3>Status floty</h3>
+      <p>OK</p>
+    </div>
+  </div>
+
+  <div id="content">
+    <div id="orders">
+      <h2>Zlecenia</h2>
+      <table id="ordersTable"></table>
+    </div>
+    <div id="map"></div>
+  </div>
 </div>
-
-<script>
-/* === FIREBASE === */
-firebase.initializeApp({
-  apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
-  authDomain: "fir-trans-projekt.firebaseapp.com",
-  databaseURL: "https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "fir-trans-projekt"
-});
-const auth = firebase.auth();
-const db = firebase.database();
-
-let map;
-
-/* === INTRO -> LOGIN === */
-function showLogin(){
-  document.getElementById("intro").style.display="none";
-  document.getElementById("loginBox").style.display="flex";
-}
-
-/* === LOGIN === */
-function login(){
-  const email = document.getElementById("email").value;
-  const pass  = document.getElementById("password").value;
-  const err   = document.getElementById("error");
-
-  auth.signInWithEmailAndPassword(email,pass)
-    .then(u=>{
-      db.ref("users/"+u.user.uid).once("value").then(s=>{
-        if(!s.exists() || s.val().role!=="admin"){
-          err.innerText="Brak uprawnień admina";
-          auth.signOut();
-          return;
-        }
-        document.getElementById("loginBox").style.display="none";
-        document.getElementById("panel").style.display="flex";
-        initMap();
-        loadOrders();
-      });
-    })
-    .catch(e=> err.innerText=e.message);
-}
-
-/* === MAP === */
-function initMap(){
-  map=L.map("map").setView([53.4285,14.5528],12);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-}
-
-/* === ORDERS === */
-function loadOrders(){
-  const t=document.getElementById("ordersTable");
-  db.ref("orders").on("value",s=>{
-    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
-    s.forEach(o=>{
-      const d=o.val();
-      t.innerHTML+=`<tr>
-        <td>${o.key}</td>
-        <td>${d.title}</td>
-        <td>${d.status}</td>
-      </tr>`;
-    });
-  });
-}
-</script>
-
-</body>
-</html>
