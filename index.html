@@ -14,27 +14,146 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body { margin:0; font-family:Arial; background:#0b0f1a; color:white; }
-#splash, #login, #panel { display:none; }
+body {
+  margin:0;
+  font-family:Arial;
+  background:#0b0f1a;
+  color:white;
+}
+
+/* === SPLASH === */
 #splash {
-  height:100vh; display:flex; align-items:center; justify-content:center;
-  font-size:48px; letter-spacing:5px;
+  height:100vh;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-size:48px;
+  letter-spacing:5px;
   background:linear-gradient(135deg,#0ff,#003);
   animation:pulse 2s infinite;
 }
-@keyframes pulse { 0%{opacity:.4} 50%{opacity:1} 100%{opacity:.4} }
+@keyframes pulse {
+  0%{opacity:.4}
+  50%{opacity:1}
+  100%{opacity:.4}
+}
 
-#panel { display:flex; height:100vh; }
-#orders { width:40%; padding:10px; overflow:auto; }
-#map { width:60%; height:100%; }
+/* === WELCOME === */
+#welcome {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+}
 
-table { width:100%; border-collapse:collapse; }
-td,th { border:1px solid #444; padding:5px; text-align:center; }
-button { background:#0ff; border:none; padding:5px; cursor:pointer; }
+.metropolis-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #001f3f, #000);
+  opacity: 0.8;
+}
+
+.logo-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.logo-text {
+  font-size: 5rem;
+  font-weight: 900;
+  letter-spacing: 10px;
+  color: rgba(0, 242, 255, 0.25);
+  text-shadow: 0 0 10px #00f2ff, 0 0 20px #39ff14;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  padding: 20px 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  animation: rotateHolo 8s linear infinite;
+}
+
+@keyframes rotateHolo {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+/* === LOGIN === */
+#login {
+  display:none;
+  padding:40px;
+  text-align:center;
+}
+
+/* === PANEL === */
+#panel {
+  display:none;
+  height:100vh;
+}
+
+#orders {
+  width:40%;
+  padding:10px;
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(10px);
+}
+
+#map {
+  width:60%;
+}
+
+/* === TABELA === */
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  font-size:14px;
+}
+
+th {
+  background:linear-gradient(135deg,#00f2ff,#003);
+  color:black;
+  padding:10px;
+  font-size:12px;
+}
+
+td {
+  padding:10px;
+}
+
+tr:nth-child(even) {
+  background:rgba(255,255,255,0.03);
+}
+
+tr:hover {
+  background:rgba(0,242,255,0.15);
+}
+
+.status {
+  background:rgba(0,242,255,0.2);
+  border-radius:6px;
+  padding:4px 8px;
+  font-weight:bold;
+}
+
+/* === BUTTON === */
+button {
+  background:linear-gradient(135deg,#00f2ff,#003);
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
 </style>
 
 <script>
-/* === FIREBASE KONFIGURACJA (panel-admina) === */
+/* === FIREBASE === */
 const firebaseConfig = {
   apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain: "fir-trans-projekt.firebaseapp.com",
@@ -42,10 +161,10 @@ const firebaseConfig = {
   projectId: "fir-trans-projekt",
   storageBucket: "fir-trans-projekt.firebasestorage.app",
   messagingSenderId: "285753383667",
-  appId: "1:285753383667:web:95eaac335c2a1f1f3a3586",
-  measurementId: "G-DSEY52E77K"
+  appId: "1:285753383667:web:95eaac335c2a1f1f3a3586"
 };
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.database();
 
@@ -57,26 +176,32 @@ window.onload = () => {
   document.getElementById("splash").style.display="flex";
   setTimeout(()=>{
     document.getElementById("splash").style.display="none";
-    document.getElementById("login").style.display="block";
   },2000);
 };
 
-/* === LOGOWANIE === */
-function login() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+/* === LOGO CLICK === */
+document.addEventListener("DOMContentLoaded",()=>{
+  document.querySelector(".logo-container").onclick = () => {
+    const w = document.getElementById("welcome");
+    w.style.transition="opacity .8s";
+    w.style.opacity="0";
+    setTimeout(()=>{
+      w.style.display="none";
+      document.getElementById("login").style.display="block";
+    },800);
+  };
+});
 
-  if(!email || !password){
-    document.getElementById('loginError').innerText = "Wpisz email i hasło!";
-    return;
-  }
+/* === LOGIN === */
+function login(){
+  const email = emailInput.value;
+  const pass = passwordInput.value;
 
-  auth.signInWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      const user = userCredential.user;
-      db.ref("users/"+user.uid).once("value").then(snap=>{
-        if(!snap.exists() || snap.val().role!=="admin"){
-          alert("Brak przypisanej roli ADMIN");
+  auth.signInWithEmailAndPassword(email,pass)
+    .then(u=>{
+      db.ref("users/"+u.user.uid).once("value").then(s=>{
+        if(!s.exists() || s.val().role!=="admin"){
+          alert("Brak roli ADMIN");
           auth.signOut();
           return;
         }
@@ -87,82 +212,67 @@ function login() {
         loadDrivers();
       });
     })
-    .catch(err=>{
-      document.getElementById('loginError').innerText = err.message;
-    });
+    .catch(e=>loginError.innerText=e.message);
 }
-
-// Enter w polu hasła
-window.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('loginBtn').addEventListener('click', login);
-  document.getElementById('password').addEventListener('keyup', e=>{
-    if(e.key==='Enter') login();
-  });
-});
 
 /* === MAPA === */
 function initMap(){
-  map = L.map('map').setView([53.4285,14.5528],13); // Szczecin
+  map=L.map('map').setView([53.4285,14.5528],13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
-/* === KIEROWCY === */
+/* === DRIVERS === */
 function loadDrivers(){
-  db.ref("drivers").on("value", snap=>{
+  db.ref("drivers").on("value",snap=>{
     snap.forEach(d=>{
-      const id = d.key;
-      const v = d.val();
-      if(!v.lat || !v.lng) return;
-
-      if(markers[id]) {
-        markers[id].setLatLng([v.lat,v.lng]);
-      } else {
-        markers[id] = L.marker([v.lat,v.lng])
-          .addTo(map)
-          .bindPopup(v.name);
-      }
+      const v=d.val();
+      if(!v.lat||!v.lng)return;
+      if(markers[d.key]) markers[d.key].setLatLng([v.lat,v.lng]);
+      else markers[d.key]=L.marker([v.lat,v.lng]).addTo(map).bindPopup(v.name);
     });
   });
 }
 
-/* === ZLECENIA === */
+/* === ORDERS === */
 function loadOrders(){
-  const t = ordersTable;
-  t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
-
-  db.ref("orders").on("value", snap=>{
-    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
+  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
+  db.ref("orders").on("value",snap=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Kierowca</th></tr>";
     snap.forEach(o=>{
       const d=o.val();
-      const r=t.insertRow();
-      r.innerHTML=`
+      ordersTable.insertRow().innerHTML=`
         <td>${o.key}</td>
         <td>${d.title}</td>
-        <td>${d.status}</td>
-        <td>${d.driverId||"-"}</td>
-      `;
+        <td class="status">${d.status}</td>
+        <td>${d.driverId||"-"}</td>`;
     });
   });
 }
 
 function newOrder(){
   const t=prompt("Tytuł zlecenia");
-  if(!t) return;
-  db.ref("orders").push({title:t,status:"nowe",driverId:""});
+  if(t) db.ref("orders").push({title:t,status:"nowe",driverId:""});
 }
 </script>
-
 </head>
+
 <body>
 
 <div id="splash">S-TRANS</div>
 
+<div id="welcome">
+  <div class="metropolis-bg"></div>
+  <div class="logo-container">
+    <div class="logo-text">S-TRANS</div>
+  </div>
+</div>
+
 <div id="login">
   <h2>Logowanie admina</h2>
-  <input id="email" placeholder="email"><br><br>
-  <input id="password" type="password" placeholder="hasło"><br><br>
-  <button id="loginBtn">Zaloguj</button>
-  <p id="loginError" style="color:red;"></p>
+  <input id="emailInput" placeholder="email"><br><br>
+  <input id="passwordInput" type="password" placeholder="hasło"><br><br>
+  <button onclick="login()">Zaloguj</button>
+  <p id="loginError" style="color:red"></p>
 </div>
 
 <div id="panel">
