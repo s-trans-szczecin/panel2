@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Fleet Control</title>
+<title>S-TRANS | Fleet Management</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -43,12 +43,11 @@ body {
   color:#fff;
 }
 button {
-  width:100%;
-  padding:10px;
+  padding:8px;
   background:#00eaff;
   border:none;
-  font-weight:bold;
   cursor:pointer;
+  font-weight:bold;
 }
 #error { color:#ff4d4d; }
 
@@ -56,24 +55,51 @@ button {
 #panel {
   display:none;
   height:100vh;
+  flex-direction:column;
+}
+
+/* DASHBOARD */
+#dashboard {
+  display:flex;
+  gap:10px;
+  padding:10px;
+  background:#070b18;
+}
+.card {
+  flex:1;
+  background:#0e1430;
+  padding:10px;
+  text-align:center;
+  border:1px solid #1e2a55;
+}
+.card span {
+  font-size:24px;
+  font-weight:bold;
+}
+
+/* CONTENT */
+#content {
+  display:flex;
+  height:100%;
 }
 #orders {
-  width:38%;
-  background:#0d132b;
-  padding:12px;
+  width:40%;
+  padding:10px;
   overflow:auto;
+  background:#0d132b;
 }
 #map {
-  width:62%;
+  width:60%;
 }
 
 /* TABLE */
 table {
   width:100%;
   border-collapse:collapse;
+  font-size:13px;
 }
 th, td {
-  padding:8px;
+  padding:6px;
   border-bottom:1px solid #1e2a55;
 }
 th {
@@ -81,7 +107,7 @@ th {
   color:#000;
 }
 .status-nowe { color:#00eaff; }
-.status-wdrodze { color:#ffd500; }
+.status-w_drodze { color:#ffd500; }
 .status-dostarczone { color:#39ff14; }
 </style>
 </head>
@@ -101,11 +127,24 @@ th {
 
 <!-- PANEL -->
 <div id="panel">
-  <div id="orders">
-    <h2>Zlecenia</h2>
-    <table id="ordersTable"></table>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <div class="card">Zlecenia<br><span id="kpiOrders">0</span></div>
+    <div class="card">Aktywne<br><span id="kpiActive">0</span></div>
+    <div class="card">Dostarczone<br><span id="kpiDone">0</span></div>
+    <div class="card">Ciężarówki<br><span id="kpiTrucks">0</span></div>
   </div>
-  <div id="map"></div>
+
+  <!-- CONTENT -->
+  <div id="content">
+    <div id="orders">
+      <h3>Zlecenia</h3>
+      <table id="ordersTable"></table>
+    </div>
+    <div id="map"></div>
+  </div>
+
 </div>
 
 <script>
@@ -123,6 +162,7 @@ auth.signOut();
 
 let map;
 let trucks = {};
+let routes = [];
 
 /* LOGIN */
 function login(){
@@ -130,69 +170,58 @@ function login(){
   const pass  = document.getElementById("password").value;
   const err   = document.getElementById("error");
 
-  if(!email || !pass){
-    err.innerText = "Podaj email i hasło";
-    return;
-  }
-
   auth.signInWithEmailAndPassword(email, pass)
     .then(u => db.ref("users/"+u.user.uid).once("value"))
     .then(snap=>{
-      if(!snap.exists() || snap.val().role !== "admin"){
-        err.innerText = "Brak uprawnień admina";
+      if(!snap.exists() || snap.val().role!=="admin"){
+        err.innerText="Brak uprawnień";
         auth.signOut();
         return;
       }
-
-      document.getElementById("loginBox").style.display="none";
-      document.getElementById("panel").style.display="flex";
+      loginBox.style.display="none";
+      panel.style.display="flex";
       initMap();
       loadOrders();
-      initDemoTrucks();
+      initFleet();
     })
-    .catch(e=>{
-      err.innerText = e.message;
-    });
+    .catch(e=>err.innerText=e.message);
 }
 
 /* MAP */
 function initMap(){
-  map = L.map("map").setView([53.4285,14.5528],11);
+  map = L.map("map").setView([53.43,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
-/* TRUCK ICON */
-const truckIcon = L.divIcon({
-  html:"🚚",
-  className:"",
-  iconSize:[30,30]
-});
-
-/* DEMO TRUCKS */
-function initDemoTrucks(){
+/* FLEET */
+function initFleet(){
   const demo = [
-    {id:"T1", lat:53.45, lng:14.50},
-    {id:"T2", lat:53.40, lng:14.60},
-    {id:"T3", lat:53.47, lng:14.58}
+    {id:"TR-01", lat:53.45, lng:14.50},
+    {id:"TR-02", lat:53.40, lng:14.60},
+    {id:"TR-03", lat:53.47, lng:14.58}
   ];
 
   demo.forEach(t=>{
-    trucks[t.id] = L.marker([t.lat,t.lng],{icon:truckIcon})
+    const m = L.marker([t.lat,t.lng],{icon:L.divIcon({html:"🚚",iconSize:[30,30]})})
       .addTo(map)
       .bindPopup("Ciężarówka "+t.id);
+    trucks[t.id] = m;
   });
 
-  setInterval(moveTrucks, 3000);
+  document.getElementById("kpiTrucks").innerText = demo.length;
+  setInterval(moveFleet,3000);
 }
 
-/* RUCH CIĘŻARÓWEK */
-function moveTrucks(){
+/* MOVE */
+function moveFleet(){
   Object.values(trucks).forEach(m=>{
     const p = m.getLatLng();
-    m.setLatLng([
+    const n = [
       p.lat + (Math.random()-0.5)*0.01,
       p.lng + (Math.random()-0.5)*0.01
-    ]);
+    ];
+    L.polyline([p,n],{color:"#00eaff"}).addTo(map);
+    m.setLatLng(n);
   });
 }
 
@@ -200,18 +229,36 @@ function moveTrucks(){
 function loadOrders(){
   const t = document.getElementById("ordersTable");
   db.ref("orders").on("value", snap=>{
-    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
+    let total=0, active=0, done=0;
+    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Akcja</th></tr>";
     snap.forEach(o=>{
+      total++;
       const d=o.val();
-      const cls="status-"+(d.status||"nowe");
+      if(d.status==="w_drodze") active++;
+      if(d.status==="dostarczone") done++;
       t.innerHTML+=`
         <tr>
           <td>${o.key}</td>
           <td>${d.title||""}</td>
-          <td class="${cls}">${d.status||"nowe"}</td>
+          <td class="status-${d.status||"nowe"}">${d.status||"nowe"}</td>
+          <td>
+            <button onclick="nextStatus('${o.key}','${d.status||"nowe"}')">➡</button>
+          </td>
         </tr>`;
     });
+    kpiOrders.innerText=total;
+    kpiActive.innerText=active;
+    kpiDone.innerText=done;
   });
+}
+
+/* STATUS FLOW */
+function nextStatus(id, st){
+  const order = db.ref("orders/"+id);
+  let n="nowe";
+  if(st==="nowe") n="w_drodze";
+  else if(st==="w_drodze") n="dostarczone";
+  order.update({status:n});
 }
 </script>
 
