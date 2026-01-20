@@ -2,154 +2,49 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Fleet Control Panel</title>
+<title>S-TRANS | Panel</title>
 
-<!-- Firebase --><!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8">
-<title>S-TRANS | Fleet Control</title>
-
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#0b0f1a;
-  color:#fff;
-}
+body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
 
-/* ===== LOGIN ===== */
 #loginScreen{
-  position:fixed;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:radial-gradient(circle,#020c1b,#000);
-  z-index:1000;
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#000;
 }
-
 #loginBox{
-  width:320px;
-  padding:40px;
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(15px);
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.1);
+  width:320px;padding:30px;
+  background:#111;border-radius:10px;
 }
+input,button{
+  width:100%;padding:10px;margin-top:10px;
+}
+button{background:#39ff14;border:none;font-weight:bold;cursor:pointer}
 
-#loginBox h2{text-align:center}
-#loginBox input,#loginBox button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-}
-#loginBox input{
-  background:#111;
-  border:1px solid #333;
-  color:#fff;
-}
-#loginBox button{
-  background:#39ff14;
-  border:none;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* ===== PANEL ===== */
-#panel{
-  display:none;
-  height:100vh;
-  flex-direction:column;
-}
-
-/* TOPBAR */
+#panel{display:none;height:100vh;flex-direction:column}
 #topbar{
-  height:60px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  height:60px;background:#111;
+  display:flex;align-items:center;justify-content:space-between;
   padding:0 20px;
-  background:rgba(15,25,45,0.85);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,0.1);
 }
-
-#logo{
-  font-size:26px;
-  letter-spacing:4px;
-}
-#logo span{
-  color:#39ff14;
-  display:inline-block;
-  animation:spin 8s linear infinite;
-  text-shadow:0 0 10px #39ff14;
-}
-@keyframes spin{
-  from{transform:rotateY(0deg)}
-  to{transform:rotateY(360deg)}
-}
-
-button{
-  border:none;
-  padding:8px 14px;
-  cursor:pointer;
-  border-radius:6px;
-  font-weight:bold;
-}
-.logout{background:#ff3b3b;color:#fff}
-
-/* DASHBOARD */
-#dashboard{
-  flex:1;
-  display:flex;
-  gap:10px;
-  padding:10px;
-}
-
-.panelBox{
-  flex:1;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:10px;
-  padding:10px;
-  overflow:auto;
-}
-
-/* TABLE */
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #333}
-th{color:#39ff14}
-tr:hover{background:rgba(57,255,20,0.08)}
-.editBtn{background:#39ff14;padding:4px 8px}
-
-/* MAP */
-#mapBox{
-  height:40%;
-  margin:10px;
-  border-radius:10px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,0.1);
-}
-#map{height:100%}
+#dashboard{flex:1;display:flex;padding:10px;gap:10px}
+.box{flex:1;background:#151515;padding:10px;border-radius:8px}
+#map{height:40vh}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
   <div id="loginBox">
-    <h2>Panel Admina</h2>
+    <h2>Logowanie</h2>
     <input id="email" placeholder="Email">
     <input id="password" type="password" placeholder="Hasło">
     <button onclick="login()">Zaloguj</button>
@@ -157,31 +52,24 @@ tr:hover{background:rgba(57,255,20,0.08)}
   </div>
 </div>
 
-<!-- PANEL -->
 <div id="panel">
-
   <div id="topbar">
-    <div id="logo"><span>S</span>-TRANS</div>
-    <button class="logout" onclick="logout()">Wyloguj</button>
+    <b>S-TRANS</b>
+    <button onclick="logout()">Wyloguj</button>
   </div>
 
   <div id="dashboard">
-    <div class="panelBox">
+    <div class="box">
+      <h3>Zlecenia</h3>
+      <table id="ordersTable"></table>
+    </div>
+    <div class="box">
       <h3>Kierowcy</h3>
       <div id="driversList"></div>
     </div>
-
-    <div class="panelBox">
-      <h3>Zlecenia</h3>
-      <button onclick="newOrder()">+ Nowe</button>
-      <table id="ordersTable"></table>
-    </div>
   </div>
 
-  <div id="mapBox">
-    <div id="map"></div>
-  </div>
-
+  <div id="map"></div>
 </div>
 
 <script>
@@ -197,653 +85,53 @@ const db=firebase.database();
 let map,markers={};
 
 function login(){
-  const email=document.getElementById("email").value.trim();
-  const pass=document.getElementById("password").value.trim();
+  const email=document.getElementById("email").value;
+  const pass=document.getElementById("password").value;
   const err=document.getElementById("loginError");
 
-  if(!email||!pass){err.innerText="Podaj email i hasło";return;}
-
   auth.signInWithEmailAndPassword(email,pass)
-    .then(res=>{
-      db.ref("users/"+res.user.uid).once("value").then(s=>{
-        if(s.val()?.role!=="admin"){
-          alert("Brak uprawnień ADMIN");
-          auth.signOut();return;
-        }
-        document.getElementById("loginScreen").style.display="none";
-        document.getElementById("panel").style.display="flex";
-        initMap();loadDrivers();loadOrders();
-      });
+    .then(()=>{
+      document.getElementById("loginScreen").style.display="none";
+      document.getElementById("panel").style.display="flex";
+      initMap();loadOrders();loadDrivers();
     })
     .catch(e=>err.innerText=e.message);
 }
 
 function logout(){
-  auth.signOut().then(()=>{
-    location.reload();
-  });
+  auth.signOut().then(()=>location.reload());
 }
 
 function initMap(){
-  map=L.map("map").setView([53.4285,14.5528],11);
+  map=L.map("map").setView([53.4,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
 function loadDrivers(){
-  db.ref("drivers").on("value",snap=>{
+  db.ref("drivers").on("value",s=>{
     driversList.innerHTML="";
-    snap.forEach(d=>{
-      const v=d.val(),id=d.key;
-      if(!v.lat||!v.lng)return;
-
-      driversList.innerHTML+=`<div><b>${v.name||id}</b></div>`;
-
-      if(!markers[id]){
-        markers[id]=L.marker([v.lat,v.lng]).addTo(map);
-        markers[id].last=[v.lat,v.lng];
-      }else{
-        markers[id].setLatLng([v.lat,v.lng]);
+    s.forEach(d=>{
+      const v=d.val();
+      driversList.innerHTML+=`<div>${v.name||d.key}</div>`;
+      if(v.lat&&v.lng){
+        if(!markers[d.key]){
+          markers[d.key]=L.marker([v.lat,v.lng]).addTo(map);
+        }else{
+          markers[d.key].setLatLng([v.lat,v.lng]);
+        }
       }
     });
   });
 }
 
 function loadOrders(){
-  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
-  db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
-    snap.forEach(o=>{
-      ordersTable.innerHTML+=`
-        <tr>
-          <td>${o.key}</td>
-          <td>${o.val().title}</td>
-          <td>${o.val().status}</td>
-          <td><button class="editBtn" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status}')">Edytuj</button></td>
-        </tr>`;
+  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th></tr>";
+  db.ref("orders").on("value",s=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th></tr>";
+    s.forEach(o=>{
+      ordersTable.innerHTML+=`<tr><td>${o.key}</td><td>${o.val().title}</td></tr>`;
     });
   });
-}
-
-function newOrder(){
-  const t=prompt("Tytuł zlecenia");
-  if(t)db.ref("orders").push({title:t,status:"nowe"});
-}
-
-function editOrder(id,t,s){
-  const nt=prompt("Tytuł",t);
-  const ns=prompt("Status",s);
-  if(nt&&ns)db.ref("orders/"+id).update({title:nt,status:ns});
-}
-</script>
-
-</body>
-</html>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://<!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8">
-<title>S-TRANS | Fleet Operations</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#0b0f1a;
-  color:#fff;
-}
-
-/* LOGIN */
-#loginScreen{
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-#loginBox{
-  width:320px;
-  padding:40px;
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(15px);
-  border-radius:12px;
-}
-#loginBox input,#loginBox button{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-}
-#loginBox input{
-  background:#111;
-  border:1px solid #333;
-  color:#fff;
-}
-#loginBox button{
-  background:#39ff14;
-  border:none;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* PANEL */
-#panel{
-  display:none;
-  height:100vh;
-  flex-direction:column;
-}
-
-/* TOP BAR */
-#topbar{
-  height:60px;
-  background:rgba(20,30,50,0.7);
-  backdrop-filter:blur(20px);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  border-bottom:1px solid rgba(255,255,255,0.1);
-}
-
-/* LOGO */
-#logo{
-  font-size:26px;
-  letter-spacing:4px;
-}
-#logo .s{
-  color:#39ff14;
-  text-shadow:0 0 10px #39ff14,0 0 30px #39ff14;
-  animation:spin 8s linear infinite;
-  display:inline-block;
-}
-@keyframes spin{
-  from{transform:rotateY(0deg);}
-  to{transform:rotateY(360deg);}
-}
-
-button.main{
-  background:linear-gradient(135deg,#39ff14,#1fae0a);
-  border:none;
-  padding:8px 14px;
-  cursor:pointer;
-  font-weight:bold;
-  border-radius:6px;
-}
-button.warn{
-  background:#ff3b3b;
-  border:none;
-  padding:8px 14px;
-  color:#fff;
-  cursor:pointer;
-}
-
-/* DASHBOARD */
-#dashboard{
-  display:flex;
-  padding:10px;
-  gap:10px;
-  height:45%;
-}
-.panelBox{
-  flex:1;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:10px;
-  padding:10px;
-  overflow:auto;
-}
-
-/* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:8px;
-  border-bottom:1px solid #333;
-}
-th{
-  color:#39ff14;
-}
-tr:hover{
-  background:rgba(57,255,20,0.08);
-}
-.editBtn{
-  background:#39ff14;
-  border:none;
-  padding:4px 8px;
-  cursor:pointer;
-}
-
-/* MAP */
-#mapContainer{
-  height:45%;
-  margin:10px;
-  border-radius:10px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,0.1);
-}
-#map{height:100%}
-</style>
-</head>
-
-<body>
-
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div id="loginBox">
-    <h2>Panel administracyjny</h2>
-    <input id="email" placeholder="email">
-    <input id="password" type="password" placeholder="hasło">
-    <button onclick="login()">Zaloguj</button>
-    <p id="loginError" style="color:red"></p>
-  </div>
-</div>
-
-<!-- PANEL -->
-<div id="panel">
-
-  <div id="topbar">
-    <div id="logo"><span class="s">S</span>-TRANS</div>
-    <button class="warn" onclick="logout()">Wyloguj</button>
-  </div>
-
-  <!-- DASHBOARD -->
-  <div id="dashboard">
-
-    <div class="panelBox">
-      <h3>Kierowcy</h3>
-      <div id="driversList"></div>
-    </div>
-
-    <div class="panelBox">
-      <h3>Zlecenia</h3>
-      <button class="main" onclick="newOrder()">+ Nowe</button>
-      <table id="ordersTable"></table>
-    </div>
-
-  </div>
-
-  <!-- MAP -->
-  <div id="mapContainer">
-    <div id="map"></div>
-  </div>
-
-</div>
-
-<script>
-firebase.initializeApp({
-  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
-  authDomain:"fir-trans-projekt.firebaseapp.com",
-  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"fir-trans-projekt"
-});
-const auth=firebase.auth();
-const db=firebase.database();
-
-let map,markers={};
-
-function login(){
-  const emailInput = document.getElementById("email");
-  const passInput  = document.getElementById("password");
-  const errorBox   = document.getElementById("loginError");
-
-  const email = emailInput.value.trim();
-  const password = passInput.value.trim();
-
-  if(!email || !password){
-    errorBox.innerText = "Podaj email i hasło";
-    return;
-  }
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(res=>{
-      db.ref("users/"+res.user.uid).once("value").then(snap=>{
-        if(!snap.exists() || snap.val().role !== "admin"){
-          alert("Brak uprawnień ADMIN");
-          auth.signOut();
-          return;
-        }
-
-        document.getElementById("loginScreen").style.display="none";
-        document.getElementById("panel").style.display="flex";
-
-        initMap();
-        loadDrivers();
-        loadOrders();
-      });
-    })
-    .catch(err=>{
-      errorBox.innerText = err.message;
-    });
-}
-
-function logout(){
-  auth.signOut().then(()=>{
-    panel.style.display="none";
-    loginScreen.style.display="flex";
-  });
-}
-
-function initMap(){
-  map=L.map("map").setView([53.4285,14.5528],11);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-}
-
-function smoothMove(marker,from,to){
-  let i=0,steps=20;
-  let lat=(to[0]-from[0])/steps;
-  let lng=(to[1]-from[1])/steps;
-  let int=setInterval(()=>{
-    if(i>=steps){clearInterval(int);return;}
-    marker.setLatLng([from[0]+lat*i,from[1]+lng*i]);i++;
-  },100);
-}
-
-function loadDrivers(){
-  db.ref("drivers").on("value",snap=>{
-    driversList.innerHTML="";
-    snap.forEach(d=>{
-      const v=d.val(),id=d.key;
-      if(!v.lat||!v.lng)return;
-
-      const div=document.createElement("div");
-      div.innerHTML=`<b>${v.name||id}</b><br>Status: ${v.status||"moving"}`;
-      div.style.cursor="pointer";
-      div.onclick=()=>map.setView([v.lat,v.lng],14);
-      driversList.appendChild(div);
-
-      if(!markers[id]){
-        markers[id]=L.marker([v.lat,v.lng]).addTo(map);
-        markers[id].last=[v.lat,v.lng];
-      }else{
-        smoothMove(markers[id],markers[id].last,[v.lat,v.lng]);
-        markers[id].last=[v.lat,v.lng];
-      }
-    });
-  });
-}
-
-function loadOrders(){
-  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
-  db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
-    snap.forEach(o=>{
-      const r=ordersTable.insertRow();
-      r.innerHTML=`
-        <td>${o.key}</td>
-        <td>${o.val().title}</td>
-        <td>${o.val().status}</td>
-        <td><button class="editBtn" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status}')">Edytuj</button></td>
-      `;
-    });
-  });
-}
-
-function newOrder(){
-  const t=prompt("Tytuł zlecenia");
-  if(t) db.ref("orders").push({title:t,status:"nowe"});
-}
-
-function editOrder(id,title,status){
-  const nt=prompt("Tytuł:",title);
-  const ns=prompt("Status:",status);
-  if(nt&&ns) db.ref("orders/"+id).update({title:nt,status:ns});
-}
-</script>
-
-</body>
-</html>
-www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#0b0f1a;
-  color:#fff;
-}
-
-/* LOGIN */
-#loginScreen{
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#loginBox{
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(16px);
-  padding:40px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.1);
-  width:300px;
-}
-#loginBox input{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  background:#111;
-  border:1px solid #333;
-  color:#fff;
-}
-#loginBox button{
-  width:100%;
-  padding:10px;
-  background:#39ff14;
-  border:none;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-/* PANEL */
-#panel{
-  display:none;
-  height:100vh;
-  flex-direction:column;
-}
-
-/* TOP BAR */
-#topbar{
-  height:60px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  background:rgba(20,30,50,0.6);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,0.1);
-}
-
-/* LOGO */
-#logo{
-  display:flex;
-  align-items:center;
-  font-size:26px;
-  letter-spacing:4px;
-}
-#logo .s{
-  color:#39ff14;
-  text-shadow:0 0 10px #39ff14,0 0 25px #39ff14;
-  animation:spin 8s linear infinite;
-  display:inline-block;
-}
-#logo .rest{
-  color:rgba(200,255,200,0.5);
-  margin-left:5px;
-}
-
-@keyframes spin{
-  from{transform:rotateY(0deg);}
-  to{transform:rotateY(360deg);}
-}
-
-#logoutBtn{
-  background:#ff3b3b;
-  border:none;
-  padding:8px 14px;
-  cursor:pointer;
-  color:#fff;
-}
-
-/* CONTENT */
-#content{
-  display:flex;
-  flex:1;
-}
-#orders{
-  width:40%;
-  padding:10px;
-  overflow:auto;
-}
-#map{
-  width:60%;
-}
-
-/* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:8px;
-  border-bottom:1px solid #333;
-}
-th{
-  color:#39ff14;
-}
-tr:hover{
-  background:rgba(57,255,20,0.05);
-}
-</style>
-</head>
-
-<body>
-
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div id="loginBox">
-    <h2>Panel administracyjny</h2>
-    <input id="email" placeholder="email">
-    <input id="password" type="password" placeholder="hasło">
-    <button onclick="login()">Zaloguj</button>
-    <p id="loginError" style="color:red;"></p>
-  </div>
-</div>
-
-<!-- PANEL -->
-<div id="panel">
-  <div id="topbar">
-    <div id="logo">
-      <span class="s">S</span><span class="rest">-TRANS</span>
-    </div>
-    <button id="logoutBtn" onclick="logout()">Wyloguj</button>
-  </div>
-
-  <div id="content">
-    <div id="orders">
-      <h3>Zlecenia</h3>
-      <button onclick="newOrder()">+ Nowe</button>
-      <table id="ordersTable"></table>
-    </div>
-    <div id="map"></div>
-  </div>
-</div>
-
-<script>
-/* FIREBASE */
-firebase.initializeApp({
-  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
-  authDomain:"fir-trans-projekt.firebaseapp.com",
-  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"fir-trans-projekt"
-});
-const auth=firebase.auth();
-const db=firebase.database();
-
-let map,markers={};
-
-/* LOGIN */
-function login(){
-  const emailVal=document.getElementById("email").value;
-  const passVal=document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(emailVal,passVal)
-    .then(res=>{
-      db.ref("users/"+res.user.uid).once("value").then(snap=>{
-        if(!snap.exists()||snap.val().role!=="admin"){
-          alert("Brak uprawnień ADMIN");
-          auth.signOut();
-          return;
-        }
-
-        document.getElementById("loginScreen").style.display="none";
-        document.getElementById("panel").style.display="flex";
-
-        initMap();
-        loadOrders();
-        loadDrivers();
-      });
-    })
-    .catch(err=>{
-      document.getElementById("loginError").innerText=err.message;
-    });
-}
-
-function logout(){
-  auth.signOut().then(()=>{
-    document.getElementById("panel").style.display="none";
-    document.getElementById("loginScreen").style.display="flex";
-  });
-}
-
-/* MAP */
-function initMap(){
-  map=L.map("map").setView([53.4285,14.5528],12);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-}
-
-/* DRIVERS */
-function loadDrivers(){
-  db.ref("drivers").on("value",snap=>{
-    snap.forEach(d=>{
-      const v=d.val(),id=d.key;
-      if(!v.lat||!v.lng)return;
-      if(markers[id]) markers[id].setLatLng([v.lat,v.lng]);
-      else markers[id]=L.marker([v.lat,v.lng]).addTo(map).bindPopup(v.name);
-    });
-  });
-}
-
-/* ORDERS */
-function loadOrders(){
-  const t=document.getElementById("ordersTable");
-  t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
-  db.ref("orders").on("value",snap=>{
-    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
-    snap.forEach(o=>{
-      const r=t.insertRow();
-      r.innerHTML=`<td>${o.key}</td><td>${o.val().title}</td><td>${o.val().status}</td>`;
-    });
-  });
-}
-
-function newOrder(){
-  const t=prompt("Tytuł zlecenia");
-  if(t) db.ref("orders").push({title:t,status:"nowe"});
 }
 </script>
 
