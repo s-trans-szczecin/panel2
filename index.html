@@ -21,8 +21,8 @@ body{
   color:#fff;
 }
 
-/* ===== LOGIN ===== */
-#login{
+/* LOGIN */
+#loginScreen{
   height:100vh;
   display:flex;
   align-items:center;
@@ -30,12 +30,13 @@ body{
 }
 #loginBox{
   background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(15px);
+  backdrop-filter:blur(16px);
   padding:40px;
   border-radius:12px;
   border:1px solid rgba(255,255,255,0.1);
+  width:300px;
 }
-#login input{
+#loginBox input{
   width:100%;
   padding:10px;
   margin-bottom:10px;
@@ -43,7 +44,7 @@ body{
   border:1px solid #333;
   color:#fff;
 }
-#login button{
+#loginBox button{
   width:100%;
   padding:10px;
   background:#39ff14;
@@ -52,14 +53,14 @@ body{
   font-weight:bold;
 }
 
-/* ===== PANEL ===== */
+/* PANEL */
 #panel{
   display:none;
   height:100vh;
   flex-direction:column;
 }
 
-/* ===== TOP BAR ===== */
+/* TOP BAR */
 #topbar{
   height:60px;
   display:flex;
@@ -71,7 +72,7 @@ body{
   border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
-/* ===== LOGO ===== */
+/* LOGO */
 #logo{
   display:flex;
   align-items:center;
@@ -94,7 +95,7 @@ body{
   to{transform:rotateY(360deg);}
 }
 
-#logout{
+#logoutBtn{
   background:#ff3b3b;
   border:none;
   padding:8px 14px;
@@ -102,7 +103,7 @@ body{
   color:#fff;
 }
 
-/* ===== CONTENT ===== */
+/* CONTENT */
 #content{
   display:flex;
   flex:1;
@@ -116,7 +117,7 @@ body{
   width:60%;
 }
 
-/* ===== TABLE ===== */
+/* TABLE */
 table{
   width:100%;
   border-collapse:collapse;
@@ -137,7 +138,7 @@ tr:hover{
 <body>
 
 <!-- LOGIN -->
-<div id="login">
+<div id="loginScreen">
   <div id="loginBox">
     <h2>Panel administracyjny</h2>
     <input id="email" placeholder="email">
@@ -153,7 +154,7 @@ tr:hover{
     <div id="logo">
       <span class="s">S</span><span class="rest">-TRANS</span>
     </div>
-    <button id="logout" onclick="logout()">Wyloguj</button>
+    <button id="logoutBtn" onclick="logout()">Wyloguj</button>
   </div>
 
   <div id="content">
@@ -181,24 +182,35 @@ let map,markers={};
 
 /* LOGIN */
 function login(){
-  auth.signInWithEmailAndPassword(
-    email.value,password.value
-  ).then(res=>{
-    db.ref("users/"+res.user.uid).once("value").then(s=>{
-      if(s.val()?.role!=="admin"){
-        auth.signOut();alert("Brak uprawnień");return;
-      }
-      login.style.display="none";
-      panel.style.display="flex";
-      initMap();loadOrders();loadDrivers();
+  const emailVal=document.getElementById("email").value;
+  const passVal=document.getElementById("password").value;
+
+  auth.signInWithEmailAndPassword(emailVal,passVal)
+    .then(res=>{
+      db.ref("users/"+res.user.uid).once("value").then(snap=>{
+        if(!snap.exists()||snap.val().role!=="admin"){
+          alert("Brak uprawnień ADMIN");
+          auth.signOut();
+          return;
+        }
+
+        document.getElementById("loginScreen").style.display="none";
+        document.getElementById("panel").style.display="flex";
+
+        initMap();
+        loadOrders();
+        loadDrivers();
+      });
+    })
+    .catch(err=>{
+      document.getElementById("loginError").innerText=err.message;
     });
-  }).catch(e=>loginError.innerText=e.message);
 }
 
 function logout(){
   auth.signOut().then(()=>{
-    panel.style.display="none";
-    login.style.display="flex";
+    document.getElementById("panel").style.display="none";
+    document.getElementById("loginScreen").style.display="flex";
   });
 }
 
@@ -222,7 +234,7 @@ function loadDrivers(){
 
 /* ORDERS */
 function loadOrders(){
-  const t=ordersTable;
+  const t=document.getElementById("ordersTable");
   t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
   db.ref("orders").on("value",snap=>{
     t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
