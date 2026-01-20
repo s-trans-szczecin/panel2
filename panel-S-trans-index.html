@@ -21,10 +21,33 @@ body{
   color:#fff;
 }
 
+/* INTRO */
+#intro{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+#introLogo{
+  font-size:64px;
+  font-weight:900;
+  letter-spacing:10px;
+  color:#39ff14;
+  text-shadow:0 0 30px #39ff14;
+  animation:spin 3s linear infinite;
+}
+@keyframes spin{
+  from{transform:rotateY(0deg)}
+  to{transform:rotateY(360deg)}
+}
+
 /* LOGIN */
 #login{
+  display:none;
   height:100vh;
-  display:flex;
   align-items:center;
   justify-content:center;
 }
@@ -118,7 +141,6 @@ th,td{
   font-size:12px;
 }
 th{color:#39ff14}
-tr:hover{background:rgba(57,255,20,.08)}
 
 /* MAP */
 #map{
@@ -142,26 +164,27 @@ tr:hover{background:rgba(57,255,20,.08)}
 
 <body>
 
+<!-- INTRO -->
+<div id="intro">
+  <div id="introLogo">S-TRANS</div>
+</div>
+
 <!-- LOGIN -->
 <div id="login">
   <div id="loginBox">
     <h3>Logowanie</h3>
     <input id="email" placeholder="Email">
     <input id="password" type="password" placeholder="Hasło">
-    <button onclick="login()">Zaloguj</button>
+    <button onclick="loginUser()">Zaloguj</button>
     <p id="loginError" style="color:red;font-size:12px"></p>
   </div>
 </div>
 
 <!-- PANEL -->
 <div id="panel">
-
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
-    <div>
-      <button class="btn" onclick="newOrder()">+ Zlecenie</button>
-      <button class="btn red" onclick="logout()">Wyloguj</button>
-    </div>
+    <button class="btn red" onclick="logout()">Wyloguj</button>
   </div>
 
   <div id="main">
@@ -169,7 +192,6 @@ tr:hover{background:rgba(57,255,20,.08)}
       <h4>Kierowcy</h4>
       <div id="driversList"></div>
     </div>
-
     <div class="box" id="ordersBox">
       <h4>Zlecenia</h4>
       <table id="ordersTable"></table>
@@ -180,6 +202,12 @@ tr:hover{background:rgba(57,255,20,.08)}
 </div>
 
 <script>
+/* INTRO → LOGIN */
+setTimeout(()=>{
+  intro.style.display="none";
+  login.style.display="flex";
+},3000);
+
 /* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
@@ -194,7 +222,7 @@ let map;
 let markers={};
 
 /* LOGIN */
-function login(){
+function loginUser(){
   auth.signInWithEmailAndPassword(email.value,password.value)
     .then(()=>{
       login.style.display="none";
@@ -235,10 +263,8 @@ function loadDrivers(){
       const v=d.val();
       const id=d.key;
       driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
-
       if(!v.lat||!v.lng) return;
       const pos=[v.lat,v.lng];
-
       if(!markers[id]){
         const icon=L.divIcon({
           html:`<div class="truck-icon"></div>`,
@@ -268,10 +294,6 @@ function loadOrders(){
         </tr>`;
     });
   });
-}
-function newOrder(){
-  const t=prompt("Tytuł zlecenia");
-  if(t) db.ref("orders").push({title:t,status:"nowe"});
 }
 </script>
 
