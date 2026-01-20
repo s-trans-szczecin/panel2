@@ -71,7 +71,7 @@ body{
   flex-direction:column;
 }
 
-/* TOP */
+/* TOPBAR */
 #topbar{
   height:58px;
   display:flex;
@@ -167,7 +167,7 @@ tr:hover{background:rgba(57,255,20,.08)}
 
 <!-- INTRO -->
 <div id="intro">
-  <video id="introVideo" autoplay muted>
+  <video id="introVideo" autoplay muted playsinline>
     <source src="intro.mp4" type="video/mp4">
   </video>
 </div>
@@ -178,7 +178,7 @@ tr:hover{background:rgba(57,255,20,.08)}
     <h2>Logowanie</h2>
     <input id="email" placeholder="Email">
     <input id="password" type="password" placeholder="Hasło">
-    <button onclick="login()">Zaloguj</button>
+    <button id="loginBtn">Zaloguj</button>
     <p id="loginError" style="color:red"></p>
   </div>
 </div>
@@ -188,7 +188,9 @@ tr:hover{background:rgba(57,255,20,.08)}
 
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
-    <button onclick="logout()" style="background:#ff4444;border:none;padding:6px 12px;color:#fff">Wyloguj</button>
+    <button onclick="logout()" style="background:#ff4444;border:none;padding:6px 12px;color:#fff">
+      Wyloguj
+    </button>
   </div>
 
   <div id="kpi">
@@ -213,107 +215,108 @@ tr:hover{background:rgba(57,255,20,.08)}
 </div>
 
 <script>
-/* INTRO */
-setTimeout(()=>{
-  introVideo.pause();
-  intro.style.display="none";
-  login.style.display="flex";
-},3000);
+document.addEventListener("DOMContentLoaded",()=>{
 
-/* FIREBASE */
-firebase.initializeApp({
-  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
-  authDomain:"fir-trans-projekt.firebaseapp.com",
-  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"fir-trans-projekt"
+  const intro=document.getElementById("intro");
+  const introVideo=document.getElementById("introVideo");
+  const login=document.getElementById("login");
+  const panel=document.getElementById("panel");
+
+  /* INTRO → LOGIN */
+  setTimeout(()=>{
+    introVideo.pause();
+    intro.style.display="none";
+    login.style.display="flex";
+  },3000);
+
+  /* FIREBASE */
+  firebase.initializeApp({
+    apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+    authDomain:"fir-trans-projekt.firebaseapp.com",
+    databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"fir-trans-projekt"
+  });
+
+  const auth=firebase.auth();
+  const db=firebase.database();
+  let map,markers={};
+
+  document.getElementById("loginBtn").onclick=()=>{
+    auth.signInWithEmailAndPassword(email.value,password.value)
+    .then(()=>{
+      login.style.display="none";
+      panel.style.display="flex";
+      initMap();
+      loadDrivers();
+      loadOrders();
+    })
+    .catch(e=>loginError.innerText=e.message);
+  };
+
+  window.logout=()=>auth.signOut().then(()=>location.reload());
+
+  function initMap(){
+    map=L.map("map").setView([53.4,14.55],11);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  }
+
+  function smooth(marker,from,to){
+    let i=0,steps=30;
+    let dLat=(to[0]-from[0])/steps;
+    let dLng=(to[1]-from[1])/steps;
+    let int=setInterval(()=>{
+      if(i>=steps){clearInterval(int);return;}
+      marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
+      i++;
+    },60);
+  }
+
+  function loadDrivers(){
+    db.ref("drivers").on("value",snap=>{
+      driversList.innerHTML="";
+      let online=0,total=0;
+
+      snap.forEach(d=>{
+        total++;
+        const v=d.val(),id=d.key;
+        driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
+        if(v.status==="online") online++;
+
+        if(!v.lat||!v.lng) return;
+        const pos=[v.lat,v.lng];
+
+        if(!markers[id]){
+          const icon=L.divIcon({html:'<div class="truck"></div>',iconSize:[26,26]});
+          markers[id]=L.marker(pos,{icon}).addTo(map);
+          markers[id].last=pos;
+        }else{
+          smooth(markers[id],markers[id].last,pos);
+          markers[id].last=pos;
+        }
+      });
+
+      kpiDrivers.innerText=total;
+      kpiOnline.innerText=online;
+    });
+  }
+
+  function loadOrders(){
+    db.ref("orders").on("value",snap=>{
+      ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
+      let c=0;
+      snap.forEach(o=>{
+        c++;
+        ordersTable.innerHTML+=`
+        <tr>
+          <td>${o.key}</td>
+          <td>${o.val().title||""}</td>
+          <td>${o.val().status||""}</td>
+        </tr>`;
+      });
+      kpiOrders.innerText=c;
+    });
+  }
 });
-const auth=firebase.auth();
-const db=firebase.database();
-
-let map;
-let markers={};
-
-/* LOGIN */
-function login(){
-  auth.signInWithEmailAndPassword(email.value,password.value)
-  .then(()=>{
-    login.style.display="none";
-    panel.style.display="flex";
-    initMap();
-    loadDrivers();
-    loadOrders();
-  })
-  .catch(e=>loginError.innerText=e.message);
-}
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
-
-/* MAP */
-function initMap(){
-  map=L.map("map").setView([53.4,14.55],11);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-}
-
-/* SMOOTH MOVE */
-function smooth(marker,from,to){
-  let i=0,steps=30;
-  let dLat=(to[0]-from[0])/steps;
-  let dLng=(to[1]-from[1])/steps;
-  let int=setInterval(()=>{
-    if(i>=steps){clearInterval(int);return;}
-    marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
-    i++;
-  },60);
-}
-
-/* DRIVERS + REAL MOVE */
-function loadDrivers(){
-  db.ref("drivers").on("value",snap=>{
-    driversList.innerHTML="";
-    let online=0,total=0;
-
-    snap.forEach(d=>{
-      total++;
-      const v=d.val(),id=d.key;
-      driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
-      if(v.status==="online") online++;
-
-      if(!v.lat||!v.lng) return;
-      const pos=[v.lat,v.lng];
-
-      if(!markers[id]){
-        const icon=L.divIcon({html:'<div class="truck"></div>',iconSize:[26,26]});
-        markers[id]=L.marker(pos,{icon}).addTo(map);
-        markers[id].last=pos;
-      }else{
-        smooth(markers[id],markers[id].last,pos);
-        markers[id].last=pos;
-      }
-    });
-
-    kpiDrivers.innerText=total;
-    kpiOnline.innerText=online;
-  });
-}
-
-/* ORDERS */
-function loadOrders(){
-  db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
-    let count=0;
-    snap.forEach(o=>{
-      count++;
-      ordersTable.innerHTML+=`
-      <tr>
-        <td>${o.key}</td>
-        <td>${o.val().title||""}</td>
-        <td>${o.val().status||""}</td>
-      </tr>`;
-    });
-    kpiOrders.innerText=count;
-  });
-}
 </script>
 
 </body>
