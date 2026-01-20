@@ -100,7 +100,12 @@ button.del{background:#ff4444;color:#fff}
 
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
-    <button onclick="logout()" class="small del">Wyloguj</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="location.href='https://s-trans-szczecin.github.io/panel2/pobierz_apke.html'" class="small">
+        Pobierz aplikację mobilną
+      </button>
+      <button onclick="logout()" class="small del">Wyloguj</button>
+    </div>
   </div>
 
   <div id="kpi">
@@ -218,13 +223,14 @@ function initMap(){
 function loadOrders(){
   db.ref("orders").on("value",snap=>{
     ordersTable.innerHTML =
-      "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Akcje</th></tr>";
+      "<tr><th>ID</th><th>ID Kierowcy</th><th>Tytuł</th><th>Status</th><th>Akcje</th></tr>";
     let c=0;
     snap.forEach(o=>{
       c++;
       ordersTable.innerHTML+=`
       <tr>
         <td>${o.key}</td>
+        <td>${o.val().driverId||"—"}</td>
         <td>${o.val().title||""}</td>
         <td>${o.val().status||""}</td>
         <td>
@@ -241,7 +247,8 @@ function addOrder(){
   const id = "ZL-"+Math.floor(Math.random()*900+100);
   db.ref("orders/"+id).set({
     title:"Nowe zlecenie",
-    status:"Nowe"
+    status:"Nowe",
+    driverId:"—"
   });
 }
 
