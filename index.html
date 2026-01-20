@@ -4,7 +4,281 @@
 <meta charset="UTF-8">
 <title>S-TRANS | Fleet Control Panel</title>
 
+<!-- Firebase --><!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>S-TRANS | Fleet Control</title>
+
 <!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0b0f1a;
+  color:#fff;
+}
+
+/* ===== LOGIN ===== */
+#loginScreen{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(circle,#020c1b,#000);
+  z-index:1000;
+}
+
+#loginBox{
+  width:320px;
+  padding:40px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+#loginBox h2{text-align:center}
+#loginBox input,#loginBox button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+#loginBox input{
+  background:#111;
+  border:1px solid #333;
+  color:#fff;
+}
+#loginBox button{
+  background:#39ff14;
+  border:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* ===== PANEL ===== */
+#panel{
+  display:none;
+  height:100vh;
+  flex-direction:column;
+}
+
+/* TOPBAR */
+#topbar{
+  height:60px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 20px;
+  background:rgba(15,25,45,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+#logo{
+  font-size:26px;
+  letter-spacing:4px;
+}
+#logo span{
+  color:#39ff14;
+  display:inline-block;
+  animation:spin 8s linear infinite;
+  text-shadow:0 0 10px #39ff14;
+}
+@keyframes spin{
+  from{transform:rotateY(0deg)}
+  to{transform:rotateY(360deg)}
+}
+
+button{
+  border:none;
+  padding:8px 14px;
+  cursor:pointer;
+  border-radius:6px;
+  font-weight:bold;
+}
+.logout{background:#ff3b3b;color:#fff}
+
+/* DASHBOARD */
+#dashboard{
+  flex:1;
+  display:flex;
+  gap:10px;
+  padding:10px;
+}
+
+.panelBox{
+  flex:1;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;
+  padding:10px;
+  overflow:auto;
+}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #333}
+th{color:#39ff14}
+tr:hover{background:rgba(57,255,20,0.08)}
+.editBtn{background:#39ff14;padding:4px 8px}
+
+/* MAP */
+#mapBox{
+  height:40%;
+  margin:10px;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.1);
+}
+#map{height:100%}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div id="loginBox">
+    <h2>Panel Admina</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Hasło">
+    <button onclick="login()">Zaloguj</button>
+    <p id="loginError" style="color:red"></p>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+
+  <div id="topbar">
+    <div id="logo"><span>S</span>-TRANS</div>
+    <button class="logout" onclick="logout()">Wyloguj</button>
+  </div>
+
+  <div id="dashboard">
+    <div class="panelBox">
+      <h3>Kierowcy</h3>
+      <div id="driversList"></div>
+    </div>
+
+    <div class="panelBox">
+      <h3>Zlecenia</h3>
+      <button onclick="newOrder()">+ Nowe</button>
+      <table id="ordersTable"></table>
+    </div>
+  </div>
+
+  <div id="mapBox">
+    <div id="map"></div>
+  </div>
+
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+  authDomain:"fir-trans-projekt.firebaseapp.com",
+  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"fir-trans-projekt"
+});
+
+const auth=firebase.auth();
+const db=firebase.database();
+let map,markers={};
+
+function login(){
+  const email=document.getElementById("email").value.trim();
+  const pass=document.getElementById("password").value.trim();
+  const err=document.getElementById("loginError");
+
+  if(!email||!pass){err.innerText="Podaj email i hasło";return;}
+
+  auth.signInWithEmailAndPassword(email,pass)
+    .then(res=>{
+      db.ref("users/"+res.user.uid).once("value").then(s=>{
+        if(s.val()?.role!=="admin"){
+          alert("Brak uprawnień ADMIN");
+          auth.signOut();return;
+        }
+        document.getElementById("loginScreen").style.display="none";
+        document.getElementById("panel").style.display="flex";
+        initMap();loadDrivers();loadOrders();
+      });
+    })
+    .catch(e=>err.innerText=e.message);
+}
+
+function logout(){
+  auth.signOut().then(()=>{
+    location.reload();
+  });
+}
+
+function initMap(){
+  map=L.map("map").setView([53.4285,14.5528],11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+}
+
+function loadDrivers(){
+  db.ref("drivers").on("value",snap=>{
+    driversList.innerHTML="";
+    snap.forEach(d=>{
+      const v=d.val(),id=d.key;
+      if(!v.lat||!v.lng)return;
+
+      driversList.innerHTML+=`<div><b>${v.name||id}</b></div>`;
+
+      if(!markers[id]){
+        markers[id]=L.marker([v.lat,v.lng]).addTo(map);
+        markers[id].last=[v.lat,v.lng];
+      }else{
+        markers[id].setLatLng([v.lat,v.lng]);
+      }
+    });
+  });
+}
+
+function loadOrders(){
+  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
+  db.ref("orders").on("value",snap=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
+    snap.forEach(o=>{
+      ordersTable.innerHTML+=`
+        <tr>
+          <td>${o.key}</td>
+          <td>${o.val().title}</td>
+          <td>${o.val().status}</td>
+          <td><button class="editBtn" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status}')">Edytuj</button></td>
+        </tr>`;
+    });
+  });
+}
+
+function newOrder(){
+  const t=prompt("Tytuł zlecenia");
+  if(t)db.ref("orders").push({title:t,status:"nowe"});
+}
+
+function editOrder(id,t,s){
+  const nt=prompt("Tytuł",t);
+  const ns=prompt("Status",s);
+  if(nt&&ns)db.ref("orders/"+id).update({title:nt,status:ns});
+}
+</script>
+
+</body>
+</html>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://<!DOCTYPE html>
