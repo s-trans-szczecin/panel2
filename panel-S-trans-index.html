@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Fleet Control Panel</title>
+<title>S-TRANS | Fleet Control</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -14,142 +14,76 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#0b0f1a;
-  color:#fff;
-}
+body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
 
-/* ===== LOGIN ===== */
-#loginScreen{
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#loginBox{
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(16px);
-  padding:40px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.1);
-  width:300px;
-}
-#loginBox input{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  background:#111;
-  border:1px solid #333;
-  color:#fff;
-}
-#loginBox button{
-  width:100%;
-  padding:10px;
-  background:#39ff14;
-  border:none;
-  cursor:pointer;
-  font-weight:bold;
-}
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+#loginBox{width:320px;padding:30px;background:#111;border-radius:10px}
+#loginBox input,#loginBox button{width:100%;padding:10px;margin-top:10px}
+#loginBox button{background:#39ff14;border:none;font-weight:bold;cursor:pointer}
 
-/* ===== PANEL ===== */
-#panel{
-  display:none;
-  height:100vh;
-  flex-direction:column;
-}
+/* PANEL */
+#panel{display:none;height:100vh;flex-direction:column}
 
-/* ===== TOP BAR ===== */
+/* TOPBAR */
 #topbar{
-  height:60px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  background:rgba(20,30,50,0.6);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,0.1);
+  height:56px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;background:rgba(10,20,40,.9);
+  border-bottom:1px solid rgba(255,255,255,.1)
 }
-
-/* ===== LOGO ===== */
-#logo{
-  display:flex;
-  align-items:center;
-  font-size:26px;
-  letter-spacing:4px;
-}
+#logo{font-size:24px;letter-spacing:3px;font-weight:bold}
 #logo .s{
-  color:#39ff14;
-  text-shadow:0 0 10px #39ff14,0 0 25px #39ff14;
-  animation:spin 8s linear infinite;
-  display:inline-block;
+  color:#39ff14;display:inline-block;
+  text-shadow:0 0 10px #39ff14;
+  animation:spin 6s linear infinite
 }
-#logo .rest{
-  color:rgba(200,255,200,0.5);
-  margin-left:5px;
-}
-@keyframes spin{
-  from{transform:rotateY(0deg);}
-  to{transform:rotateY(360deg);}
-}
+@keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
 
-#logoutBtn{
-  background:#ff3b3b;
-  border:none;
-  padding:8px 14px;
-  cursor:pointer;
-  color:#fff;
-}
-
-/* ===== CONTENT ===== */
-#content{
+/* KPI */
+#kpiBar{
   display:flex;
+  gap:8px;
+  padding:6px;
+}
+.kpi{
   flex:1;
-}
-
-/* ===== SIDEBAR ===== */
-#sidebar{
-  width:40%;
-  padding:10px;
-  overflow:auto;
-}
-
-/* ===== MAP ===== */
-#map{
-  width:60%;
-}
-
-/* ===== DRIVERS LIST ===== */
-.driverItem{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;
   padding:8px;
-  margin-bottom:6px;
-  background:rgba(255,255,255,0.04);
-  border-left:4px solid #39ff14;
-  cursor:pointer;
+  text-align:center;
 }
-.driverItem.stopped{
-  border-left-color:#ffaa00;
-}
-.driverItem:hover{
-  background:rgba(57,255,20,0.1);
-}
+.kpi b{font-size:22px;color:#39ff14}
 
-/* ===== TABLE ===== */
-table{
-  width:100%;
-  border-collapse:collapse;
+/* BUTTONS */
+#topButtons button{
+  margin-left:6px;padding:6px 12px;
+  border:none;border-radius:6px;font-weight:bold;cursor:pointer
 }
-th,td{
-  padding:8px;
-  border-bottom:1px solid #333;
+.btn-main{background:linear-gradient(135deg,#39ff14,#1faa0a)}
+.btn-warn{background:#ff3b3b;color:#fff}
+
+/* DASHBOARD */
+#dashboard{
+  flex:1;display:flex;gap:6px;padding:6px
 }
-th{
-  color:#39ff14;
+.panelBox{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:8px;overflow:auto
 }
-tr:hover{
-  background:rgba(57,255,20,0.05);
-}
+#driversBox{flex:.9}
+#ordersBox{flex:1.1}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th,td{padding:6px;border-bottom:1px solid #333;font-size:13px}
+th{color:#39ff14}
+tr:hover{background:rgba(57,255,20,.08)}
+.editBtn{background:#39ff14;border:none;padding:3px 6px;cursor:pointer}
+
+/* MAP */
+#map{height:36vh;margin:6px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
 </style>
 </head>
 
@@ -158,156 +92,143 @@ tr:hover{
 <!-- LOGIN -->
 <div id="loginScreen">
   <div id="loginBox">
-    <h2>Panel administracyjny</h2>
-    <input id="email" placeholder="email">
-    <input id="password" type="password" placeholder="hasło">
+    <h2>Logowanie</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Hasło">
     <button onclick="login()">Zaloguj</button>
-    <p id="loginError" style="color:red;"></p>
+    <p id="loginError" style="color:red"></p>
   </div>
 </div>
 
 <!-- PANEL -->
 <div id="panel">
+
   <div id="topbar">
-    <div id="logo">
-      <span class="s">S</span><span class="rest">-TRANS</span>
+    <div id="logo"><span class="s">S</span>-TRANS</div>
+    <div id="topButtons">
+      <button class="btn-main" onclick="newOrder()">+ Zlecenie</button>
+      <button class="btn-main" onclick="centerMap()">Centruj</button>
+      <button class="btn-warn" onclick="logout()">Wyloguj</button>
     </div>
-    <button id="logoutBtn" onclick="logout()">Wyloguj</button>
   </div>
 
-  <div id="content">
-    <div id="sidebar">
+  <!-- KPI -->
+  <div id="kpiBar">
+    <div class="kpi"><div>Zlecenia</div><b id="kpiOrders">0</b></div>
+    <div class="kpi"><div>Kierowcy</div><b id="kpiDrivers">0</b></div>
+    <div class="kpi"><div>Online</div><b id="kpiOnline">0</b></div>
+  </div>
+
+  <div id="dashboard">
+    <div class="panelBox" id="driversBox">
       <h3>Kierowcy</h3>
       <div id="driversList"></div>
-
-      <hr style="border-color:#333">
-
+    </div>
+    <div class="panelBox" id="ordersBox">
       <h3>Zlecenia</h3>
-      <button onclick="newOrder()">+ Nowe</button>
       <table id="ordersTable"></table>
     </div>
-
-    <div id="map"></div>
   </div>
+
+  <div id="map"></div>
+
 </div>
 
 <script>
-/* ===== FIREBASE ===== */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain:"fir-trans-projekt.firebaseapp.com",
   databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:"fir-trans-projekt"
 });
-const auth=firebase.auth();
-const db=firebase.database();
+const auth=firebase.auth(), db=firebase.database();
+let map,markers={};
 
-let map;
-let markers={};
-
-/* ===== LOGIN ===== */
+/* LOGIN */
 function login(){
-  const emailVal=document.getElementById("email").value;
-  const passVal=document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(emailVal,passVal)
-    .then(res=>{
-      db.ref("users/"+res.user.uid).once("value").then(snap=>{
-        if(!snap.exists()||snap.val().role!=="admin"){
-          alert("Brak uprawnień ADMIN");
-          auth.signOut();return;
-        }
-        document.getElementById("loginScreen").style.display="none";
-        document.getElementById("panel").style.display="flex";
-        initMap();
-        loadOrders();
-        loadDrivers();
-      });
+  auth.signInWithEmailAndPassword(email.value,password.value)
+    .then(()=>{
+      loginScreen.style.display="none";
+      panel.style.display="flex";
+      initMap();loadDrivers();loadOrders();
     })
-    .catch(err=>{
-      document.getElementById("loginError").innerText=err.message;
-    });
+    .catch(e=>loginError.innerText=e.message);
 }
+function logout(){auth.signOut().then(()=>location.reload())}
 
-function logout(){
-  auth.signOut().then(()=>{
-    document.getElementById("panel").style.display="none";
-    document.getElementById("loginScreen").style.display="flex";
-  });
-}
-
-/* ===== MAP ===== */
+/* MAP */
 function initMap(){
-  map=L.map("map").setView([53.4285,14.5528],12);
+  map=L.map("map").setView([53.4,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
+function centerMap(){map.setView([53.4,14.55],11)}
 
-/* ===== SMOOTH MOVE ===== */
-function smoothMove(marker, from, to){
-  const steps=20;
-  let i=0;
-  const latStep=(to[0]-from[0])/steps;
-  const lngStep=(to[1]-from[1])/steps;
-
-  const interval=setInterval(()=>{
-    if(i>=steps){clearInterval(interval);return;}
-    marker.setLatLng([
-      from[0]+latStep*i,
-      from[1]+lngStep*i
-    ]);
+/* SMOOTH MOVE */
+function smoothMove(marker,from,to){
+  let i=0,steps=25;
+  let dLat=(to[0]-from[0])/steps;
+  let dLng=(to[1]-from[1])/steps;
+  let int=setInterval(()=>{
+    if(i>=steps){clearInterval(int);return}
+    marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
     i++;
-  },100);
+  },80);
 }
 
-/* ===== DRIVERS ===== */
+/* DRIVERS */
 function loadDrivers(){
-  const list=document.getElementById("driversList");
-
-  db.ref("drivers").on("value",snap=>{
-    list.innerHTML="";
-    snap.forEach(d=>{
-      const id=d.key;
+  db.ref("drivers").on("value",s=>{
+    driversList.innerHTML="";
+    let online=0,total=0;
+    s.forEach(d=>{
+      total++;
       const v=d.val();
-      if(!v.lat||!v.lng)return;
+      driversList.innerHTML+=`🚚 ${v.name||d.key}<br>`;
+      if(v.status==="online")online++;
 
-      const item=document.createElement("div");
-      item.className="driverItem "+(v.status==="stopped"?"stopped":"");
-      item.innerHTML=`<b>${v.name||id}</b><br>Status: ${v.status||"moving"}`;
-      item.onclick=()=>{
-        map.setView([v.lat,v.lng],15);
-        markers[id].openPopup();
-      };
-      list.appendChild(item);
-
-      if(!markers[id]){
-        markers[id]=L.marker([v.lat,v.lng])
-          .addTo(map)
-          .bindPopup(`<b>${v.name||id}</b><br>Status: ${v.status||"moving"}`);
-        markers[id].lastPos=[v.lat,v.lng];
-      }else{
-        smoothMove(markers[id],markers[id].lastPos,[v.lat,v.lng]);
-        markers[id].lastPos=[v.lat,v.lng];
+      if(v.lat&&v.lng){
+        if(!markers[d.key]){
+          markers[d.key]=L.marker([v.lat,v.lng]).addTo(map);
+          markers[d.key].last=[v.lat,v.lng];
+        }else{
+          smoothMove(markers[d.key],markers[d.key].last,[v.lat,v.lng]);
+          markers[d.key].last=[v.lat,v.lng];
+        }
       }
     });
+    kpiDrivers.innerText=total;
+    kpiOnline.innerText=online;
   });
 }
 
-/* ===== ORDERS ===== */
+/* ORDERS */
 function loadOrders(){
-  const t=document.getElementById("ordersTable");
-  t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
-  db.ref("orders").on("value",snap=>{
-    t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
-    snap.forEach(o=>{
-      const r=t.insertRow();
-      r.innerHTML=`<td>${o.key}</td><td>${o.val().title}</td><td>${o.val().status}</td>`;
+  db.ref("orders").on("value",s=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
+    let count=0;
+    s.forEach(o=>{
+      count++;
+      ordersTable.innerHTML+=`
+        <tr>
+          <td>${o.key}</td>
+          <td>${o.val().title}</td>
+          <td>${o.val().status||"nowe"}</td>
+          <td><button class="editBtn"
+            onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">
+            Edytuj</button></td>
+        </tr>`;
     });
+    kpiOrders.innerText=count;
   });
 }
-
 function newOrder(){
   const t=prompt("Tytuł zlecenia");
-  if(t) db.ref("orders").push({title:t,status:"nowe"});
+  if(t)db.ref("orders").push({title:t,status:"nowe"});
+}
+function editOrder(id,t,s){
+  const nt=prompt("Tytuł",t);
+  const ns=prompt("Status",s);
+  if(nt&&ns)db.ref("orders/"+id).update({title:nt,status:ns});
 }
 </script>
 
