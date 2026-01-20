@@ -29,83 +29,80 @@ body{margin:0;font-family:Segoe UI;background:#0b0f1a;color:#fff;font-size:12px;
 #panel{display:none;height:100vh;flex-direction:column}
 
 /* TOP */
-#topbar{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#0a1428}
+#topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#0a1428}
 #logo{font-size:20px;font-weight:900;letter-spacing:3px}
 #logo span{color:#39ff14;animation:spin 8s linear infinite}
 @keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
 
 /* KPI */
-#kpi{display:flex;gap:4px;padding:4px}
-.kpi{flex:1;background:#0f1629;border-radius:8px;padding:4px;text-align:center}
+#kpi{display:flex;gap:6px;padding:6px}
+.kpi{flex:1;background:#0f1629;border-radius:8px;padding:6px;text-align:center}
 .kpi b{color:#39ff14}
 
 /* MAIN */
 #main{flex:1;display:grid;grid-template-columns:1.3fr 1fr;gap:6px;padding:6px;min-height:0}
 
 /* BOX */
-.box{background:rgba(15,22,41,.92);border-radius:8px;padding:10px;overflow:auto;border:1px solid rgba(255,255,255,.08);box-shadow:0 0 20px rgba(0,0,0,.4)}
+.box{background:rgba(15,22,41,.95);border-radius:10px;padding:10px;overflow:auto;border:1px solid rgba(255,255,255,.08)}
 h4{margin:2px 0 8px;color:#b6ffb0;font-size:13px}
 
 /* TABLE */
 table{width:100%;border-collapse:collapse}
-th,td{padding:6px;border-bottom:1px solid rgba(255,255,255,.12);font-size:12px}
+th,td{padding:6px;border-bottom:1px solid rgba(255,255,255,.12)}
 th{color:#b6ffb0;text-align:left}
 
 /* BUTTONS */
-button.small{font-size:11px;padding:4px 8px;border:none;border-radius:6px;cursor:pointer;transition:transform .1s ease}
-button.small:hover{transform:scale(1.03)}
+button.small{font-size:11px;padding:4px 8px;border:none;border-radius:6px;cursor:pointer}
 button.edit{background:#39ff14;color:#000}
 button.del{background:#ff4444;color:#fff}
 
-/* MAP */
-#map{height:100%;border-radius:8px;border:1px solid rgba(255,255,255,.12)}
-
-/* DOC MENU */
-.docMenu{position:absolute;background:rgba(10,16,28,.95);border:1px solid rgba(57,255,20,.25);border-radius:8px;padding:6px;display:none;z-index:10;box-shadow:0 0 18px rgba(57,255,20,.25)}
-.docMenu a{display:block;color:#fff;text-decoration:none;padding:4px 6px;border-radius:6px;margin:2px 0;font-size:12px}
-.docMenu a:hover{background:rgba(57,255,20,.12)}
-.docCell{position:relative}
-
-/* SYSTEM */
-.fuelBar{width:70px;height:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.08);border-radius:4px;display:inline-block;margin-right:6px;vertical-align:middle;overflow:hidden}
-.fuelBar div{height:100%;background:linear-gradient(90deg,#39ff14,#b6ffb0)}
-.alert{padding:2px 6px;border-radius:6px;font-weight:700;text-align:center;display:inline-block}
-.alert.green{background:rgba(57,255,20,.18);border:1px solid rgba(57,255,20,.35);color:#b6ffb0}
-.alert.red{background:rgba(255,75,75,.18);border:1px solid rgba(255,75,75,.35);color:#ffb0b0}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 3px;vertical-align:middle}
-.dot.green{background:#39ff14;box-shadow:0 0 6px rgba(57,255,20,.7)}
-.dot.red{background:#ff4b4b;box-shadow:0 0 6px rgba(255,75,75,.7)}
-
-/* NEW BUTTON */
+/* MOBILE BUTTON */
 .btnMobile{
   background:#39ff14;
   color:#000;
   font-weight:900;
-  padding:6px 12px;
+  padding:6px 14px;
   border-radius:10px;
   border:1px solid #2be214;
-  box-shadow:0 0 18px rgba(57,255,20,.35);
+  box-shadow:0 0 20px rgba(57,255,20,.45);
   display:flex;
   align-items:center;
   gap:8px;
-  cursor:pointer;
-  transition:transform .1s ease, box-shadow .2s ease;
+  cursor:pointer
 }
-.btnMobile:hover{
-  transform:translateY(-1px);
-  box-shadow:0 0 24px rgba(57,255,20,.55);
+.btnMobile img{width:18px}
+
+/* MAP */
+#map{height:100%;border-radius:8px}
+
+/* DOC MENU */
+.docCell{position:relative}
+.docMenu{
+  position:absolute;
+  background:#0a1020;
+  border:1px solid #39ff14;
+  border-radius:8px;
+  padding:6px;
+  display:none;
+  z-index:50
 }
-.btnMobile img{
-  width:18px;
-  height:18px;
-}
+.docMenu a{display:block;color:#fff;text-decoration:none;padding:4px}
+
+/* SYSTEM */
+.fuelBar{width:70px;height:8px;background:#333;border-radius:4px;display:inline-block}
+.fuelBar div{height:100%;background:#39ff14}
+.alert.green{color:#39ff14;font-weight:700}
+.alert.red{color:#ff4444;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.green{background:#39ff14}
+.dot.red{background:#ff4444}
 </style>
 </head>
 
 <body>
 
 <div id="intro">
-  <video id="introVideo" autoplay muted>
+  <video autoplay muted>
     <source src="intro.mp4" type="video/mp4">
   </video>
 </div>
@@ -124,71 +121,56 @@ button.del{background:#ff4444;color:#fff}
 
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btnMobile" onclick="window.open('https://s-trans-szczecin.github.io/panel2/pobierz_apke.html','_blank')">
-        <img src="https://cdn-icons-png.flaticon.com/512/888/888857.png" alt="mobile">
-        Pobierz aplikację mobilną
+    <div style="display:flex;gap:8px">
+      <button class="btnMobile"
+        onclick="window.open('https://s-trans-szczecin.github.io/panel2/pobierz_apke.html','_blank')">
+        <img src="https://cdn-icons-png.flaticon.com/512/888/888857.png">
+        Pobierz aplikację
       </button>
-      <button onclick="logout()" class="small del">Wyloguj</button>
+      <button class="small del" onclick="logout()">Wyloguj</button>
     </div>
   </div>
 
   <div id="kpi">
     <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
     <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
-    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
+    <div class="kpi">Online<br><b id="kpiOnline">10</b></div>
   </div>
 
   <div id="main">
 
-    <!-- LEFT: ORDERS + DRIVERS -->
-    <div class="box" style="display:grid;grid-template-rows:1fr 1fr;gap:6px;min-height:0">
-
-      <div style="overflow:auto">
+    <div class="box" style="display:grid;grid-template-rows:1fr 1fr;gap:6px">
+      <div>
         <h4>📦 Zlecenia</h4>
-        <button class="small" style="margin-bottom:6px" onclick="addOrder()">➕ Dodaj zlecenie</button>
+        <button class="small" onclick="addOrder()">➕ Dodaj</button>
         <table id="ordersTable"></table>
       </div>
 
-      <div style="overflow:auto">
+      <div>
         <h4>🚚 Kierowcy</h4>
-        <table id="driversTable">
-          <tr>
-            <th>Kierowca</th><th>Nr rej</th><th>Data przeglądu</th><th>Ładowność</th><th>HDS</th><th>Dokumenty</th>
-          </tr>
-        </table>
+        <table id="driversTable"></table>
       </div>
-
     </div>
 
-    <!-- RIGHT: MAP + SYSTEM -->
-    <div style="display:grid;grid-template-rows:1fr 1fr;gap:6px;min-height:0">
-
-      <div class="box" style="min-height:0">
+    <div style="display:grid;grid-template-rows:1fr 1fr;gap:6px">
+      <div class="box">
         <h4>🗺️ Mapa</h4>
         <div id="map"></div>
       </div>
 
-      <div class="box" style="min-height:0">
+      <div class="box">
         <h4>🖥️ System</h4>
         <table>
-          <tr><th>GPS</th><th>Paliwo</th><th>ETA</th><th>Alert</th><th>Czat / Kamera</th></tr>
+          <tr>
+            <th>ID auta</th><th>GPS</th><th>Paliwo</th>
+            <th>Kilometry</th><th>Śr. spalanie</th>
+            <th>ETA</th><th>Alert</th><th>Czat/Kamera</th>
+          </tr>
           <tbody id="systemRows"></tbody>
         </table>
       </div>
-
     </div>
 
-  </div>
-</div>
-
-<!-- MODAL -->
-<div id="modal">
-  <div id="modalBox">
-    <h4>Edycja zlecenia</h4>
-    <input id="editTitle" placeholder="Tytuł">
-    <input id="editStatus" placeholder="Status">
-    <button onclick="saveOrder()" class="small edit">Zapisz</button>
   </div>
 </div>
 
@@ -202,65 +184,42 @@ firebase.initializeApp({
 
 const auth=firebase.auth();
 const db=firebase.database();
-let currentOrderId=null;
-let map, cars=[];
+let map,cars=[];
 
-setTimeout(()=>{
-  intro.style.display="none";
-  login.style.display="flex";
-},4000);
+setTimeout(()=>{intro.style.display="none";login.style.display="flex"},4000);
 
 loginBtn.onclick=()=>{
   auth.signInWithEmailAndPassword(email.value,password.value)
   .then(()=>{
     login.style.display="none";
     panel.style.display="flex";
-    initMap();
-    loadOrders();
-    loadDrivers();
-    loadSystem();
+    initMap();loadOrders();loadDrivers();loadSystem();
   })
   .catch(e=>loginError.innerText=e.message);
 };
 
 function initMap(){
-  map = L.map("map").setView([53.4,14.55],10);
+  map=L.map("map").setView([53.4,14.55],10);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-
-  const carIcon = L.icon({
-    iconUrl:'https://cdn-icons-png.flaticon.com/512/744/744465.png',
-    iconSize:[20,20]
-  });
-
   for(let i=0;i<10;i++){
-    const marker = L.marker([53.43 + i*0.02, 14.55 + i*0.01], {icon:carIcon}).addTo(map);
-    cars.push(marker);
+    cars.push(L.marker([53.4+i*0.02,14.5+i*0.02]).addTo(map));
   }
-
-  setInterval(()=>{
-    cars.forEach(m=>{
-      const p=m.getLatLng();
-      m.setLatLng([p.lat + (Math.random()-0.5)*0.01, p.lng + (Math.random()-0.5)*0.01]);
-    });
-  },1500);
 }
 
 function loadOrders(){
-  db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML =
-      "<tr><th>ID</th><th>ID Kierowcy</th><th>Tytuł</th><th>Status</th><th>Akcje</th></tr>";
+  db.ref("orders").on("value",s=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>ID Kierowcy</th><th>Tytuł</th><th>Status</th><th></th></tr>";
     let c=0;
-    snap.forEach(o=>{
+    s.forEach(o=>{
       c++;
       ordersTable.innerHTML+=`
       <tr>
         <td>${o.key}</td>
-        <td>${o.val().driverId||"—"}</td>
-        <td>${o.val().title||""}</td>
-        <td>${o.val().status||""}</td>
+        <td>${o.val().driverId||"-"}</td>
+        <td>${o.val().title}</td>
+        <td>${o.val().status}</td>
         <td>
-          <button class="small edit" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status}')">✏</button>
-          <button class="small del" onclick="deleteOrder('${o.key}')">🗑</button>
+          <button class="small del" onclick="db.ref('orders/${o.key}').remove()">🗑</button>
         </td>
       </tr>`;
     });
@@ -269,93 +228,50 @@ function loadOrders(){
 }
 
 function addOrder(){
-  const id = "ZL-"+Math.floor(Math.random()*900+100);
-  db.ref("orders/"+id).set({
-    title:"Nowe zlecenie",
-    status:"Nowe",
-    driverId:"—"
-  });
-}
-
-function editOrder(id,title,status){
-  currentOrderId=id;
-  editTitle.value=title;
-  editStatus.value=status;
-  modal.style.display="flex";
-}
-
-function saveOrder(){
-  db.ref("orders/"+currentOrderId).update({
-    title:editTitle.value,
-    status:editStatus.value
-  });
-  modal.style.display="none";
-}
-
-function deleteOrder(id){
-  if(confirm("Usunąć zlecenie?")){
-    db.ref("orders/"+id).remove();
-  }
+  const id="ZL-"+Math.floor(Math.random()*900+100);
+  db.ref("orders/"+id).set({title:"Nowe",status:"Nowe",driverId:"DRV-01"});
 }
 
 function loadDrivers(){
-  const drivers = [
-    {name:"Jan Kowalski", reg:"ZS12345", check:"2026-03-12", load:"1200kg", hds:"TAK"},
-    {name:"Anna Nowak", reg:"ZS54321", check:"2026-04-02", load:"1500kg", hds:"NIE"},
-    {name:"Marek Wiśniewski", reg:"ZS11122", check:"2026-02-15", load:"900kg", hds:"TAK"}
+  driversTable.innerHTML=`
+  <tr><th>ID</th><th>Kierowca</th><th>Nr rej</th><th>Przegląd</th><th>Ład.</th><th>HDS</th><th>Dok.</th></tr>`;
+  const d=[
+    ["DRV-01","Jan Kowalski","ZS12345","2026","1200kg","TAK"],
+    ["DRV-02","Anna Nowak","ZS54321","2026","1500kg","NIE"]
   ];
-
-  driversTable.innerHTML =
-    "<tr><th>Kierowca</th><th>Nr rej</th><th>Data przeglądu</th><th>Ładowność</th><th>HDS</th><th>Dokumenty</th></tr>";
-
-  drivers.forEach(d=>{
-    const row = driversTable.insertRow();
-    row.innerHTML = `
-      <td>${d.name}</td>
-      <td>${d.reg}</td>
-      <td>${d.check}</td>
-      <td>${d.load}</td>
-      <td>${d.hds}</td>
+  d.forEach(x=>{
+    driversTable.innerHTML+=`
+    <tr>
+      <td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td>
+      <td>${x[3]}</td><td>${x[4]}</td><td>${x[5]}</td>
       <td class="docCell">
-        <button class="small" onclick="toggleDocs(this)">Wyślij</button>
+        <button class="small" onclick="this.nextElementSibling.style.display='block'">Wyślij</button>
         <div class="docMenu">
-          <a href="#">Faktura</a>
-          <a href="#">WZ</a>
-          <a href="#">List przewozowy</a>
-          <a href="#">Dokumentacja przewozu</a>
-          <a href="#">Dokumentacja zlecenia</a>
-          <a href="#">Dokumentacja dla klienta</a>
+          <a>Faktura</a><a>WZ</a><a>List</a><a>Dok. klient</a>
         </div>
       </td>
-    `;
+    </tr>`;
   });
-
-  kpiDrivers.innerText = drivers.length;
-}
-
-function toggleDocs(btn){
-  const menu = btn.nextElementSibling;
-  menu.style.display = menu.style.display === "block" ? "none" : "block";
+  kpiDrivers.innerText=d.length;
 }
 
 function loadSystem(){
-  systemRows.innerHTML="";
   for(let i=0;i<10;i++){
-    const tr=document.createElement("tr");
-    tr.innerHTML = `
-      <td>53.${40+i} / 14.${50+i}</td>
-      <td><div class="fuelBar"><div style="width:${30+i*6}%"></div></div>${30+i*6} L</td>
-      <td>ETA ${14+i}:30</td>
-      <td class="alert ${i%3==0?'green':'red'}">${i%3==0?'OK':'ALERT'}</td>
-      <td>🎥 <span class="dot ${i%2==0?'green':'red'}"></span> 💬 <span class="dot ${i%2==1?'green':'red'}"></span></td>
-    `;
-    systemRows.appendChild(tr);
+    systemRows.innerHTML+=`
+    <tr>
+      <td>CAR-${100+i}</td>
+      <td>53.${40+i}/14.${50+i}</td>
+      <td><div class="fuelBar"><div style="width:${40+i*4}%"></div></div></td>
+      <td>${12000+i*500} km</td>
+      <td>${(7.2+i*0.1).toFixed(1)}</td>
+      <td>${14+i}:30</td>
+      <td class="alert ${i%2?'green':'red'}">${i%2?'OK':'ALERT'}</td>
+      <td>🎥 <span class="dot green"></span> 💬 <span class="dot red"></span></td>
+    </tr>`;
   }
 }
 
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
+function logout(){auth.signOut().then(()=>location.reload())}
 </script>
 
 </body>
