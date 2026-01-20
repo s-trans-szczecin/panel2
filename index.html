@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Fleet Management</title>
+<title>S-TRANS | Fleet Control Panel</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -14,259 +14,228 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body {
+body{
   margin:0;
-  font-family:Segoe UI, Arial;
+  font-family:Arial,Helvetica,sans-serif;
   background:#0b0f1a;
-  color:#eaf6ff;
+  color:#fff;
 }
 
-/* INTRO */
-#intro {
-  position:fixed;
-  inset:0;
-  background:black;
-  z-index:9999;
-}
-#intro video {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* LOGIN */
-#loginBox {
+/* ===== LOGIN ===== */
+#login{
   height:100vh;
-  display:none;
+  display:flex;
   align-items:center;
   justify-content:center;
 }
-#login {
-  width:320px;
-  background:#0e1325;
-  padding:25px;
-  border-radius:10px;
+#loginBox{
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
+  padding:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.1);
 }
-#login input {
+#login input{
   width:100%;
   padding:10px;
   margin-bottom:10px;
-  background:#050814;
-  border:1px solid #1e2a55;
+  background:#111;
+  border:1px solid #333;
   color:#fff;
 }
-button {
-  padding:8px;
-  background:#00eaff;
+#login button{
+  width:100%;
+  padding:10px;
+  background:#39ff14;
   border:none;
   cursor:pointer;
   font-weight:bold;
 }
-#error { color:#ff4d4d; }
 
-/* PANEL */
-#panel {
+/* ===== PANEL ===== */
+#panel{
   display:none;
   height:100vh;
   flex-direction:column;
 }
 
-/* DASHBOARD */
-#dashboard {
+/* ===== TOP BAR ===== */
+#topbar{
+  height:60px;
   display:flex;
-  gap:10px;
-  padding:10px;
-  background:#070b18;
-}
-.card {
-  flex:1;
-  background:#0e1430;
-  padding:10px;
-  text-align:center;
-  border:1px solid #1e2a55;
-}
-.card span {
-  font-size:24px;
-  font-weight:bold;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  background:rgba(20,30,50,0.6);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
-/* CONTENT */
-#content {
+/* ===== LOGO ===== */
+#logo{
   display:flex;
-  height:100%;
+  align-items:center;
+  font-size:26px;
+  letter-spacing:4px;
 }
-#orders {
+#logo .s{
+  color:#39ff14;
+  text-shadow:0 0 10px #39ff14,0 0 25px #39ff14;
+  animation:spin 8s linear infinite;
+  display:inline-block;
+}
+#logo .rest{
+  color:rgba(200,255,200,0.5);
+  margin-left:5px;
+}
+
+@keyframes spin{
+  from{transform:rotateY(0deg);}
+  to{transform:rotateY(360deg);}
+}
+
+#logout{
+  background:#ff3b3b;
+  border:none;
+  padding:8px 14px;
+  cursor:pointer;
+  color:#fff;
+}
+
+/* ===== CONTENT ===== */
+#content{
+  display:flex;
+  flex:1;
+}
+#orders{
   width:40%;
   padding:10px;
   overflow:auto;
-  background:#0d132b;
 }
-#map {
+#map{
   width:60%;
 }
 
-/* TABLE */
-table {
+/* ===== TABLE ===== */
+table{
   width:100%;
   border-collapse:collapse;
-  font-size:13px;
 }
-th, td {
-  padding:6px;
-  border-bottom:1px solid #1e2a55;
+th,td{
+  padding:8px;
+  border-bottom:1px solid #333;
 }
-th {
-  background:#00eaff;
-  color:#000;
+th{
+  color:#39ff14;
 }
-.status-nowe { color:#00eaff; }
-.status-w_drodze { color:#ffd500; }
-.status-dostarczone { color:#39ff14; }
+tr:hover{
+  background:rgba(57,255,20,0.05);
+}
 </style>
 </head>
 
 <body>
 
-<!-- INTRO -->
-<div id="intro">
-  <video autoplay muted playsinline>
-    <source src="intro.mp4" type="video/mp4">
-  </video>
-</div>
-
 <!-- LOGIN -->
-<div id="loginBox">
-  <div id="login">
-    <h2>Panel Admina</h2>
+<div id="login">
+  <div id="loginBox">
+    <h2>Panel administracyjny</h2>
     <input id="email" placeholder="email">
     <input id="password" type="password" placeholder="hasło">
     <button onclick="login()">Zaloguj</button>
-    <p id="error"></p>
+    <p id="loginError" style="color:red;"></p>
   </div>
 </div>
 
 <!-- PANEL -->
 <div id="panel">
-
-  <div id="dashboard">
-    <div class="card">Zlecenia<br><span id="kpiOrders">0</span></div>
-    <div class="card">Aktywne<br><span id="kpiActive">0</span></div>
-    <div class="card">Dostarczone<br><span id="kpiDone">0</span></div>
-    <div class="card">Ciężarówki<br><span id="kpiTrucks">0</span></div>
+  <div id="topbar">
+    <div id="logo">
+      <span class="s">S</span><span class="rest">-TRANS</span>
+    </div>
+    <button id="logout" onclick="logout()">Wyloguj</button>
   </div>
 
   <div id="content">
     <div id="orders">
       <h3>Zlecenia</h3>
+      <button onclick="newOrder()">+ Nowe</button>
       <table id="ordersTable"></table>
     </div>
     <div id="map"></div>
   </div>
-
 </div>
 
 <script>
-/* INTRO → LOGIN (3 SEKUNDY) */
-setTimeout(()=>{
-  document.getElementById("intro").style.display="none";
-  document.getElementById("loginBox").style.display="flex";
-}, 3000);
-
 /* FIREBASE */
 firebase.initializeApp({
-  apiKey: "AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
-  authDomain: "fir-trans-projekt.firebaseapp.com",
-  databaseURL: "https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "fir-trans-projekt"
+  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+  authDomain:"fir-trans-projekt.firebaseapp.com",
+  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"fir-trans-projekt"
 });
+const auth=firebase.auth();
+const db=firebase.database();
 
-const auth = firebase.auth();
-const db = firebase.database();
-auth.signOut();
-
-let map;
-let trucks = {};
+let map,markers={};
 
 /* LOGIN */
 function login(){
-  const email = document.getElementById("email").value;
-  const pass  = document.getElementById("password").value;
-  const err   = document.getElementById("error");
-
-  auth.signInWithEmailAndPassword(email, pass)
-    .then(u => db.ref("users/"+u.user.uid).once("value"))
-    .then(snap=>{
-      if(!snap.exists() || snap.val().role!=="admin"){
-        err.innerText="Brak uprawnień";
-        auth.signOut();
-        return;
+  auth.signInWithEmailAndPassword(
+    email.value,password.value
+  ).then(res=>{
+    db.ref("users/"+res.user.uid).once("value").then(s=>{
+      if(s.val()?.role!=="admin"){
+        auth.signOut();alert("Brak uprawnień");return;
       }
-      document.getElementById("loginBox").style.display="none";
-      document.getElementById("panel").style.display="flex";
-      initMap();
-      loadOrders();
-      initFleet();
-    })
-    .catch(e=>err.innerText=e.message);
+      login.style.display="none";
+      panel.style.display="flex";
+      initMap();loadOrders();loadDrivers();
+    });
+  }).catch(e=>loginError.innerText=e.message);
+}
+
+function logout(){
+  auth.signOut().then(()=>{
+    panel.style.display="none";
+    login.style.display="flex";
+  });
 }
 
 /* MAP */
 function initMap(){
-  map = L.map("map").setView([53.43,14.55],11);
+  map=L.map("map").setView([53.4285,14.5528],12);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
-/* FLEET */
-function initFleet(){
-  const demo = [
-    {id:"TR-01", lat:53.45, lng:14.50},
-    {id:"TR-02", lat:53.40, lng:14.60},
-    {id:"TR-03", lat:53.47, lng:14.58}
-  ];
-
-  demo.forEach(t=>{
-    trucks[t.id] = L.marker([t.lat,t.lng],{
-      icon:L.divIcon({html:"🚚",iconSize:[30,30]})
-    }).addTo(map);
-  });
-
-  document.getElementById("kpiTrucks").innerText = demo.length;
-  setInterval(moveFleet,3000);
-}
-
-/* MOVE */
-function moveFleet(){
-  Object.values(trucks).forEach(m=>{
-    const p = m.getLatLng();
-    m.setLatLng([
-      p.lat + (Math.random()-0.5)*0.01,
-      p.lng + (Math.random()-0.5)*0.01
-    ]);
+/* DRIVERS */
+function loadDrivers(){
+  db.ref("drivers").on("value",snap=>{
+    snap.forEach(d=>{
+      const v=d.val(),id=d.key;
+      if(!v.lat||!v.lng)return;
+      if(markers[id]) markers[id].setLatLng([v.lat,v.lng]);
+      else markers[id]=L.marker([v.lat,v.lng]).addTo(map).bindPopup(v.name);
+    });
   });
 }
 
 /* ORDERS */
 function loadOrders(){
-  const t = document.getElementById("ordersTable");
-  db.ref("orders").on("value", snap=>{
-    let total=0, active=0, done=0;
+  const t=ordersTable;
+  t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
+  db.ref("orders").on("value",snap=>{
     t.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
     snap.forEach(o=>{
-      total++;
-      const d=o.val();
-      if(d.status==="w_drodze") active++;
-      if(d.status==="dostarczone") done++;
-      t.innerHTML+=`
-        <tr>
-          <td>${o.key}</td>
-          <td>${d.title||""}</td>
-          <td class="status-${d.status||"nowe"}">${d.status||"nowe"}</td>
-        </tr>`;
+      const r=t.insertRow();
+      r.innerHTML=`<td>${o.key}</td><td>${o.val().title}</td><td>${o.val().status}</td>`;
     });
-    kpiOrders.innerText=total;
-    kpiActive.innerText=active;
-    kpiDone.innerText=done;
   });
+}
+
+function newOrder(){
+  const t=prompt("Tytuł zlecenia");
+  if(t) db.ref("orders").push({title:t,status:"nowe"});
 }
 </script>
 
