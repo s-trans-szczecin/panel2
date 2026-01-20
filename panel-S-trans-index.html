@@ -4,11 +4,6 @@
 <meta charset="UTF-8">
 <title>S-TRANS | Fleet OS</title>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -21,19 +16,157 @@ body{
   background:#0b0f1a;
   color:#fff;
   font-size:12px;
-  overflow:hidden;
 }
 
-/* INTRO */
-#intro{
-  position:fixed;
-  inset:0;
-  background:black;
-  z-index:3000;
+header{
+  padding:10px;
+  background:#111;
+  text-align:center;
+  font-size:18px;
+  font-weight:700;
 }
-#intro video{
-  width:100%;
-  height:100%;
+
+main{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  height:calc(100vh - 50px);
+}
+
+section{
+  border:1px solid #222;
+  padding:10px;
+  overflow:auto;
+}
+
+h2{color:#39ff14;margin:6px 0}
+
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #222;padding:4px;text-align:center}
+th{background:#111}
+
+button{
+  background:#39ff14;
+  border:none;
+  font-size:11px;
+  cursor:pointer;
+  padding:4px 6px;
+}
+
+.doc-menu{
+  display:none;
+  position:absolute;
+  background:#111;
+  border:1px solid #39ff14;
+  z-index:10;
+}
+.doc-menu a{
+  display:block;
+  padding:4px;
+  cursor:pointer;
+}
+.doc-menu a:hover{background:#39ff14;color:#000}
+
+.fuel-bar{width:80px;height:6px;background:#333;margin:auto}
+.fuel-bar div{height:100%;background:#39ff14}
+
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.green{background:#39ff14}
+.red{background:red}
+
+.alert{background:#003300;color:#39ff14;padding:2px 4px}
+
+#map{height:100%}
+</style>
+</head>
+
+<body>
+<header>S-TRANS Fleet OS</header>
+
+<main>
+
+<section>
+<h2>Kierowcy</h2>
+<table>
+<tr>
+<th>Kierowca</th><th>Nr rej</th><th>Przegląd</th><th>Ładowność</th><th>HDS</th><th>Dokumenty</th>
+</tr>
+<tr>
+<td>Jan Kowalski</td><td>ZS12345</td><td>2026-03-12</td><td>1200kg</td><td>TAK</td>
+<td>
+<button class="doc-btn">Wyślij</button>
+<div class="doc-menu">
+<a>Faktura</a><a>WZ</a><a>List przewozowy</a><a>Dok. przewozu</a><a>Zlecenia</a><a>Dla klienta</a>
+</div>
+</td>
+</tr>
+</table>
+
+<h2>Zlecenia</h2>
+<table>
+<tr><th>ID</th><th>Akcje</th></tr>
+<tr>
+<td>ZL-001</td>
+<td><button>➕</button><button>✏️</button><button>🗑️</button></td>
+</tr>
+</table>
+</section>
+
+<section>
+<h2>System</h2>
+<table>
+<tr><th>GPS</th><th>Paliwo</th><th>ETA</th><th>Alert</th><th>Czat / Kamera</th></tr>
+<tbody id="systemRows"></tbody>
+</table>
+</section>
+
+<section style="grid-column:1/3">
+<h2>Mapa</h2>
+<div id="map"></div>
+</section>
+
+</main>
+
+<script>
+// menu dokumentów
+document.querySelectorAll('.doc-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    const m=btn.nextElementSibling;
+    m.style.display=m.style.display==='block'?'none':'block';
+  }
+});
+
+// system rows
+const tbody=document.getElementById('systemRows');
+for(let i=0;i<10;i++){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+  <td>53.${40+i} / 14.${50+i}</td>
+  <td><div class="fuel-bar"><div style="width:${50+i*3}%"></div></div>${50+i*3} L</td>
+  <td>ETA ${14+i}:30</td>
+  <td class="alert">OK</td>
+  <td>🎥 <span class="dot green"></span> 💬 <span class="dot ${i%2?'red':'green'}"></span></td>`;
+  tbody.appendChild(tr);
+}
+
+// mapa
+const map=L.map('map').setView([53.43,14.55],10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+const carIcon=L.icon({iconUrl:'https://cdn-icons-png.flaticon.com/512/744/744465.png',iconSize:[20,20]});
+let cars=[];
+for(let i=0;i<10;i++){
+  let m=L.marker([53.43+i*0.02,14.55],{icon:carIcon}).addTo(map);
+  cars.push(m);
+}
+setInterval(()=>{
+  cars.forEach(c=>{
+    let p=c.getLatLng();
+    c.setLatLng([p.lat+(Math.random()-0.5)*0.01,p.lng+(Math.random()-0.5)*0.01]);
+  })
+},2000);
+</script>
+</body>
+</html>
   object-fit:cover;
 }
 
