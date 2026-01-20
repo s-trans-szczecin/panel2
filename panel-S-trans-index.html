@@ -17,73 +17,118 @@
 body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
 
 /* LOGIN */
-#loginScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
-#loginBox{width:320px;padding:30px;background:#111;border-radius:10px}
-#loginBox input,#loginBox button{width:100%;padding:10px;margin-top:10px}
-#loginBox button{background:#39ff14;border:none;font-weight:bold;cursor:pointer}
+#loginScreen{
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#000;z-index:1000
+}
+#loginBox{
+  width:320px;padding:30px;
+  background:#111;border-radius:14px;
+  box-shadow:0 0 40px #39ff14
+}
+#loginBox input,#loginBox button{
+  width:100%;padding:10px;margin-top:10px
+}
+#loginBox button{
+  background:#39ff14;border:none;font-weight:bold;cursor:pointer
+}
 
 /* PANEL */
 #panel{display:none;height:100vh;flex-direction:column}
 
 /* TOPBAR */
 #topbar{
-  height:56px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;background:rgba(10,20,40,.9);
+  height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  background:rgba(10,20,40,.95);
   border-bottom:1px solid rgba(255,255,255,.1)
 }
-#logo{font-size:24px;letter-spacing:3px;font-weight:bold}
+#logo{
+  font-size:26px;font-weight:900;letter-spacing:4px
+}
 #logo .s{
-  color:#39ff14;display:inline-block;
-  text-shadow:0 0 10px #39ff14;
+  color:#39ff14;
+  display:inline-block;
+  text-shadow:0 0 20px #39ff14;
   animation:spin 6s linear infinite
 }
-@keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+@keyframes spin{
+  from{transform:rotateY(0)}
+  to{transform:rotateY(360deg)}
+}
+
+/* BUTTONS */
+#topButtons button{
+  margin-left:6px;padding:6px 12px;
+  border:none;border-radius:6px;
+  font-weight:bold;cursor:pointer
+}
+.btn-main{background:linear-gradient(135deg,#39ff14,#1faa0a)}
+.btn-warn{background:#ff3b3b;color:#fff}
 
 /* KPI */
 #kpiBar{
-  display:flex;
-  gap:8px;
-  padding:6px;
+  display:flex;gap:8px;padding:6px
 }
 .kpi{
   flex:1;
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.1);
-  border-radius:8px;
-  padding:8px;
-  text-align:center;
+  border-radius:12px;
+  padding:10px;text-align:center
 }
 .kpi b{font-size:22px;color:#39ff14}
 
-/* BUTTONS */
-#topButtons button{
-  margin-left:6px;padding:6px 12px;
-  border:none;border-radius:6px;font-weight:bold;cursor:pointer
-}
-.btn-main{background:linear-gradient(135deg,#39ff14,#1faa0a)}
-.btn-warn{background:#ff3b3b;color:#fff}
-
 /* DASHBOARD */
 #dashboard{
-  flex:1;display:flex;gap:6px;padding:6px
+  flex:1;
+  display:flex;
+  gap:6px;
+  padding:6px
 }
 .panelBox{
   background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.1);
-  border-radius:10px;padding:8px;overflow:auto
+  border-radius:12px;
+  padding:8px;
+  overflow:auto
 }
-#driversBox{flex:.9}
-#ordersBox{flex:1.1}
+#driversBox{flex:.8}
+#ordersBox{flex:1.2}
 
 /* TABLE */
 table{width:100%;border-collapse:collapse}
-th,td{padding:6px;border-bottom:1px solid #333;font-size:13px}
+th,td{
+  padding:6px;
+  border-bottom:1px solid #333;
+  font-size:13px
+}
 th{color:#39ff14}
 tr:hover{background:rgba(57,255,20,.08)}
-.editBtn{background:#39ff14;border:none;padding:3px 6px;cursor:pointer}
+.editBtn{
+  background:#39ff14;border:none;
+  padding:3px 6px;cursor:pointer
+}
+.eta{color:#39ff14;font-size:12px}
 
 /* MAP */
-#map{height:36vh;margin:6px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+#map{
+  height:36vh;
+  margin:6px;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.1)
+}
+
+/* TRUCK ICON */
+.truck-icon{
+  width:32px;height:32px;
+  background:url('https://cdn-icons-png.flaticon.com/512/743/743131.png') no-repeat center;
+  background-size:contain;
+  transform-origin:center
+}
 </style>
 </head>
 
@@ -106,17 +151,17 @@ tr:hover{background:rgba(57,255,20,.08)}
   <div id="topbar">
     <div id="logo"><span class="s">S</span>-TRANS</div>
     <div id="topButtons">
+      <button class="btn-main" onclick="startDemo()">▶ DEMO</button>
+      <button class="btn-main" onclick="stopDemo()">⏸ STOP</button>
       <button class="btn-main" onclick="newOrder()">+ Zlecenie</button>
-      <button class="btn-main" onclick="centerMap()">Centruj</button>
       <button class="btn-warn" onclick="logout()">Wyloguj</button>
     </div>
   </div>
 
-  <!-- KPI -->
   <div id="kpiBar">
-    <div class="kpi"><div>Zlecenia</div><b id="kpiOrders">0</b></div>
-    <div class="kpi"><div>Kierowcy</div><b id="kpiDrivers">0</b></div>
-    <div class="kpi"><div>Online</div><b id="kpiOnline">0</b></div>
+    <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
+    <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
+    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
   </div>
 
   <div id="dashboard">
@@ -124,6 +169,7 @@ tr:hover{background:rgba(57,255,20,.08)}
       <h3>Kierowcy</h3>
       <div id="driversList"></div>
     </div>
+
     <div class="panelBox" id="ordersBox">
       <h3>Zlecenia</h3>
       <table id="ordersTable"></table>
@@ -135,14 +181,17 @@ tr:hover{background:rgba(57,255,20,.08)}
 </div>
 
 <script>
+/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain:"fir-trans-projekt.firebaseapp.com",
   databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:"fir-trans-projekt"
 });
-const auth=firebase.auth(), db=firebase.database();
-let map,markers={};
+const auth=firebase.auth();
+const db=firebase.database();
+
+let map, markers={}, routes={}, demoInterval=null;
 
 /* LOGIN */
 function login(){
@@ -150,7 +199,9 @@ function login(){
     .then(()=>{
       loginScreen.style.display="none";
       panel.style.display="flex";
-      initMap();loadDrivers();loadOrders();
+      initMap();
+      loadDrivers();
+      loadOrders();
     })
     .catch(e=>loginError.innerText=e.message);
 }
@@ -161,41 +212,70 @@ function initMap(){
   map=L.map("map").setView([53.4,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
-function centerMap(){map.setView([53.4,14.55],11)}
 
 /* SMOOTH MOVE */
 function smoothMove(marker,from,to){
-  let i=0,steps=25;
+  let i=0,steps=30;
   let dLat=(to[0]-from[0])/steps;
   let dLng=(to[1]-from[1])/steps;
   let int=setInterval(()=>{
     if(i>=steps){clearInterval(int);return}
     marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
     i++;
-  },80);
+  },70);
 }
 
-/* DRIVERS */
+/* ETA */
+function calcETA(lat1,lng1,lat2,lng2){
+  const R=6371;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLng/2)**2;
+  const d=2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return Math.round((d/70)*60);
+}
+
+/* DRIVERS + TRACKING */
 function loadDrivers(){
-  db.ref("drivers").on("value",s=>{
+  db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
     let online=0,total=0;
-    s.forEach(d=>{
-      total++;
-      const v=d.val();
-      driversList.innerHTML+=`🚚 ${v.name||d.key}<br>`;
-      if(v.status==="online")online++;
 
-      if(v.lat&&v.lng){
-        if(!markers[d.key]){
-          markers[d.key]=L.marker([v.lat,v.lng]).addTo(map);
-          markers[d.key].last=[v.lat,v.lng];
-        }else{
-          smoothMove(markers[d.key],markers[d.key].last,[v.lat,v.lng]);
-          markers[d.key].last=[v.lat,v.lng];
+    snap.forEach(d=>{
+      total++;
+      const id=d.key;
+      const v=d.val();
+      driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
+      if(v.status==="online") online++;
+
+      if(!v.lat||!v.lng) return;
+      const pos=[v.lat,v.lng];
+
+      if(!markers[id]){
+        const icon=L.divIcon({
+          html:'<div class="truck-icon"></div>',
+          iconSize:[32,32]
+        });
+        markers[id]=L.marker(pos,{icon}).addTo(map);
+        markers[id].last=pos;
+        routes[id]=L.polyline([pos],{color:'#39ff14'}).addTo(map);
+      }else{
+        smoothMove(markers[id],markers[id].last,pos);
+        markers[id].last=pos;
+        routes[id].addLatLng(pos);
+        if(routes[id].getLatLngs().length>50){
+          routes[id].setLatLngs(routes[id].getLatLngs().slice(-50));
         }
       }
+
+      if(v.heading){
+        const el=markers[id].getElement();
+        if(el) el.style.transform=`rotate(${v.heading}deg)`;
+      }
     });
+
     kpiDrivers.innerText=total;
     kpiOnline.innerText=online;
   });
@@ -203,32 +283,63 @@ function loadDrivers(){
 
 /* ORDERS */
 function loadOrders(){
-  db.ref("orders").on("value",s=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
+  db.ref("orders").on("value",snap=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>ETA</th><th></th></tr>";
     let count=0;
-    s.forEach(o=>{
+    snap.forEach(o=>{
       count++;
+      let eta="--";
+      if(o.val().driverId && markers[o.val().driverId]){
+        const p=markers[o.val().driverId].last;
+        eta=calcETA(p[0],p[1],53.4,14.55)+" min";
+      }
       ordersTable.innerHTML+=`
         <tr>
           <td>${o.key}</td>
           <td>${o.val().title}</td>
           <td>${o.val().status||"nowe"}</td>
-          <td><button class="editBtn"
+          <td class="eta">${eta}</td>
+          <td>
+            <button class="editBtn"
             onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">
-            Edytuj</button></td>
+            Edytuj</button>
+          </td>
         </tr>`;
     });
     kpiOrders.innerText=count;
   });
 }
+
 function newOrder(){
   const t=prompt("Tytuł zlecenia");
-  if(t)db.ref("orders").push({title:t,status:"nowe"});
+  if(t) db.ref("orders").push({title:t,status:"nowe"});
 }
 function editOrder(id,t,s){
   const nt=prompt("Tytuł",t);
   const ns=prompt("Status",s);
-  if(nt&&ns)db.ref("orders/"+id).update({title:nt,status:ns});
+  if(nt&&ns) db.ref("orders/"+id).update({title:nt,status:ns});
+}
+
+/* DEMO MODE */
+function startDemo(){
+  if(demoInterval) return;
+  demoInterval=setInterval(()=>{
+    Object.keys(markers).forEach(id=>{
+      const p=markers[id].last;
+      db.ref("drivers/"+id).update({
+        lat:p[0]+(Math.random()-0.5)*0.002,
+        lng:p[1]+(Math.random()-0.5)*0.002,
+        speed:Math.floor(Math.random()*40+50),
+        heading:Math.floor(Math.random()*360),
+        status:"online",
+        lastUpdate:Date.now()
+      });
+    });
+  },3000);
+}
+function stopDemo(){
+  clearInterval(demoInterval);
+  demoInterval=null;
 }
 </script>
 
