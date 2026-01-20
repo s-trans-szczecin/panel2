@@ -110,6 +110,7 @@ body{
   cursor:pointer;
 }
 .btn.red{background:#ff4444}
+.btn.gray{background:#555;color:#fff}
 
 /* MAIN */
 #main{
@@ -184,7 +185,10 @@ th{color:#39ff14}
 <div id="panel">
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
-    <button class="btn red" onclick="logout()">Wyloguj</button>
+    <div>
+      <button class="btn" onclick="newOrder()">+ Zlecenie</button>
+      <button class="btn red" onclick="logout()">Wyloguj</button>
+    </div>
   </div>
 
   <div id="main">
@@ -192,6 +196,7 @@ th{color:#39ff14}
       <h4>Kierowcy</h4>
       <div id="driversList"></div>
     </div>
+
     <div class="box" id="ordersBox">
       <h4>Zlecenia</h4>
       <table id="ordersTable"></table>
@@ -284,16 +289,47 @@ function loadDrivers(){
 /* ORDERS */
 function loadOrders(){
   db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
+    ordersTable.innerHTML=
+      "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Akcje</th></tr>";
     snap.forEach(o=>{
       ordersTable.innerHTML+=`
         <tr>
           <td>${o.key}</td>
           <td>${o.val().title||""}</td>
           <td>${o.val().status||""}</td>
+          <td>
+            <button class="btn gray"
+              onclick="editOrder('${o.key}','${o.val().title||""}','${o.val().status||""}')">
+              Edytuj
+            </button>
+            <button class="btn red"
+              onclick="deleteOrder('${o.key}')">
+              Usuń
+            </button>
+          </td>
         </tr>`;
     });
   });
+}
+
+function newOrder(){
+  const title=prompt("Tytuł zlecenia:");
+  if(!title) return;
+  db.ref("orders").push({title:title,status:"nowe"});
+}
+
+function editOrder(id,title,status){
+  const nt=prompt("Tytuł:",title);
+  const ns=prompt("Status:",status);
+  if(nt && ns){
+    db.ref("orders/"+id).update({title:nt,status:ns});
+  }
+}
+
+function deleteOrder(id){
+  if(confirm("Usunąć zlecenie?")){
+    db.ref("orders/"+id).remove();
+  }
 }
 </script>
 
