@@ -9,7 +9,290 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
+<!-- Leaflet --><!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>S-TRANS | Fleet OS</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
 <!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Segoe UI,Arial;
+  background:#0b0f1a;
+  color:#fff;
+  font-size:12px;
+  overflow:hidden;
+}
+
+/* INTRO */
+#intro{position:fixed;inset:0;background:black;z-index:3000}
+#intro video{width:100%;height:100%;object-fit:cover}
+
+/* LOGIN */
+#login{
+  position:fixed;inset:0;
+  display:none;align-items:center;justify-content:center;
+  background:#000;
+}
+#loginBox{
+  width:320px;background:#111;padding:24px;
+  border-radius:14px;box-shadow:0 0 30px #39ff14;
+}
+#loginBox h2{text-align:center;margin:0 0 10px}
+#loginBox input,#loginBox button{
+  width:100%;padding:8px;margin-top:8px;
+}
+#loginBox button{
+  background:#39ff14;border:none;font-weight:bold;cursor:pointer;
+}
+
+/* PANEL */
+#panel{display:none;height:100vh;flex-direction:column}
+
+/* TOPBAR */
+#topbar{
+  height:52px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 14px;
+  background:#0a1428;border-bottom:1px solid #222;
+}
+#logo{
+  font-size:22px;font-weight:900;letter-spacing:3px;
+}
+#logo span{
+  color:#39ff14;display:inline-block;
+  animation:spin 8s linear infinite;
+  text-shadow:0 0 16px #39ff14;
+}
+@keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+
+/* KPI */
+#kpi{
+  display:flex;gap:4px;padding:4px;
+}
+.kpi{
+  flex:1;background:#0f1629;border:1px solid #222;
+  border-radius:10px;padding:4px;text-align:center;
+}
+.kpi b{font-size:16px;color:#39ff14}
+
+/* MAIN GRID */
+#main{
+  flex:1;
+  display:grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap:6px;
+  padding:6px;
+  min-height:0;
+}
+
+/* STACKS */
+#leftStack,#rightStack{
+  display:grid;
+  grid-template-rows: 1fr 1fr;
+  gap:6px;
+  min-height:0;
+}
+
+.box{
+  background:#0f1629;border:1px solid #222;
+  border-radius:10px;padding:6px;overflow:auto;
+}
+
+h4{
+  margin:2px 0 6px;font-size:13px;font-weight:600;
+  color:#39ff14;
+}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th,td{padding:4px;border-bottom:1px solid #333;font-size:11px}
+th{text-align:left;color:#39ff14}
+
+/* MAP */
+#map{
+  height:100%;border-radius:10px;border:1px solid #222;
+}
+
+/* TRUCK ICON */
+.truck{
+  width:22px;height:22px;background:#39ff14;
+  mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
+  -webkit-mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
+  filter:drop-shadow(0 0 6px #39ff14);
+}
+
+/* SYSTEM TAGS */
+.tag{
+  background:#081018;border:1px solid #39ff14;
+  padding:2px 6px;border-radius:6px;font-size:11px;
+}
+
+/* CHAT */
+.chat{
+  font-size:11px;opacity:.85
+}
+</style>
+</head>
+
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <video autoplay muted playsinline>
+    <source src="intro.mp4" type="video/mp4">
+  </video>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div id="loginBox">
+    <h2>Logowanie</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Hasło">
+    <button id="loginBtn">Zaloguj</button>
+    <p id="loginError" style="color:red"></p>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+
+  <div id="topbar">
+    <div id="logo"><span>S</span>-TRANS</div>
+    <button onclick="logout()" style="background:#ff4444;border:none;padding:4px 10px;color:#fff">
+      Wyloguj
+    </button>
+  </div>
+
+  <div id="kpi">
+    <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
+    <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
+    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
+    <div class="kpi">Alerty<br><b>0</b></div>
+  </div>
+
+  <div id="main">
+
+    <!-- LEWA -->
+    <div id="leftStack">
+      <div class="box">
+        <h4>🚚 Kierowcy</h4>
+        <div id="driversList"></div>
+      </div>
+
+      <div class="box">
+        <h4>📦 Zlecenia</h4>
+        <table id="ordersTable"></table>
+      </div>
+    </div>
+
+    <!-- PRAWA -->
+    <div id="rightStack">
+      <div id="map"></div>
+
+      <div class="box">
+        <h4>⚙ System</h4>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <span class="tag">🟢 GPS</span>
+          <span class="tag">⛽ Paliwo</span>
+          <span class="tag">🕒 ETA</span>
+          <span class="tag">⚠ Alerty</span>
+          <span class="tag">💬 Czat</span>
+        </div>
+        <div class="chat" style="margin-top:6px">
+          [System] Wszystkie pojazdy online<br>
+          [ETA] Średni czas: 2h 14m
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+
+  setTimeout(()=>{
+    document.getElementById("intro").style.display="none";
+    document.getElementById("login").style.display="flex";
+  },3000);
+
+  firebase.initializeApp({
+    apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+    authDomain:"fir-trans-projekt.firebaseapp.com",
+    databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"fir-trans-projekt"
+  });
+
+  const auth=firebase.auth();
+  const db=firebase.database();
+  let map,markers={};
+
+  loginBtn.onclick=()=>{
+    auth.signInWithEmailAndPassword(email.value,password.value)
+    .then(()=>{
+      login.style.display="none";
+      panel.style.display="flex";
+      initMap();loadDrivers();loadOrders();
+    })
+    .catch(e=>loginError.innerText=e.message);
+  };
+
+  window.logout=()=>auth.signOut().then(()=>location.reload());
+
+  function initMap(){
+    map=L.map("map").setView([53.4,14.55],11);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  }
+
+  function loadDrivers(){
+    db.ref("drivers").on("value",snap=>{
+      driversList.innerHTML="";
+      let online=0,total=0;
+      snap.forEach(d=>{
+        total++;
+        const v=d.val();
+        driversList.innerHTML+=`🚚 ${v.name||d.key}<br>`;
+        if(v.status==="online") online++;
+      });
+      kpiDrivers.innerText=total;
+      kpiOnline.innerText=online;
+    });
+  }
+
+  function loadOrders(){
+    db.ref("orders").on("value",snap=>{
+      ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
+      let c=0;
+      snap.forEach(o=>{
+        c++;
+        ordersTable.innerHTML+=`
+        <tr>
+          <td>${o.key}</td>
+          <td>${o.val().title||""}</td>
+          <td>${o.val().status||""}</td>
+        </tr>`;
+      });
+      kpiOrders.innerText=c;
+    });
+  }
+});
+</script>
+
+</body>
+</html>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
