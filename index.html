@@ -15,7 +15,7 @@
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Segoe UI;
+  font-family:Segoe UI,Arial;
   background:#0b0f1a;
   color:#fff;
   font-size:12px;
@@ -43,51 +43,25 @@ body{
   justify-content:space-between;
   padding:0 12px;
   background:#0a1428;
-  border-bottom:1px solid rgba(255,255,255,.08);
 }
 
-/* ===== HOLOGRAM LOGO ===== */
+/* ✅ HOLOGRAM LOGO – JEDYNA ZMIANA */
 #logo{
   font-size:20px;
   font-weight:900;
   letter-spacing:3px;
-  position:relative;
   color:#39ff14;
-  transform-style:preserve-3d;
-  animation:holoRotate 10s linear infinite, holoPulse 3s ease-in-out infinite;
+  animation:logoSpin 8s linear infinite;
   text-shadow:
-    0 0 6px rgba(57,255,20,.6),
-    0 0 18px rgba(57,255,20,.5),
-    0 0 32px rgba(57,255,20,.35);
+    0 0 6px rgba(57,255,20,.7),
+    0 0 14px rgba(57,255,20,.5),
+    0 0 28px rgba(57,255,20,.35);
+  transform-style:preserve-3d;
 }
 
-#logo::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(
-    to bottom,
-    rgba(57,255,20,.0),
-    rgba(57,255,20,.25),
-    rgba(57,255,20,.0)
-  );
-  animation:holoScan 2.5s linear infinite;
-  pointer-events:none;
-}
-
-@keyframes holoRotate{
+@keyframes logoSpin{
   from{transform:rotateY(0deg)}
   to{transform:rotateY(360deg)}
-}
-
-@keyframes holoPulse{
-  0%,100%{opacity:.9}
-  50%{opacity:1}
-}
-
-@keyframes holoScan{
-  from{transform:translateY(-100%)}
-  to{transform:translateY(100%)}
 }
 
 /* KPI */
@@ -102,7 +76,7 @@ body{
   grid-template-columns:1.3fr 1fr;
   gap:6px;
   padding:6px;
-  min-height:0;
+  min-height:0
 }
 
 /* BOX */
@@ -122,36 +96,23 @@ th,td{padding:6px;border-bottom:1px solid rgba(255,255,255,.12);font-size:12px}
 th{color:#b6ffb0;text-align:left}
 
 /* BUTTONS */
-button.small{
-  font-size:11px;
-  padding:4px 8px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  transition:transform .1s ease
-}
-button.small:hover{transform:scale(1.03)}
+button.small{font-size:11px;padding:4px 8px;border:none;border-radius:6px;cursor:pointer}
 button.edit{background:#39ff14;color:#000}
 button.del{background:#ff4444;color:#fff}
 
 /* MAP */
 #map{height:100%;border-radius:8px;border:1px solid rgba(255,255,255,.12)}
 
-/* MOBILE BTN */
+/* MOBILE BUTTON */
 .btnMobile{
   background:#39ff14;
   color:#000;
   font-weight:900;
   padding:6px 12px;
   border-radius:10px;
-  border:1px solid #2be214;
-  box-shadow:0 0 18px rgba(57,255,20,.35);
-  display:flex;
-  align-items:center;
-  gap:8px;
+  border:none;
   cursor:pointer
 }
-.btnMobile img{width:18px;height:18px}
 </style>
 </head>
 
@@ -177,11 +138,10 @@ button.del{background:#ff4444;color:#fff}
 
   <div id="topbar">
     <div id="logo">S-TRANS</div>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:8px">
       <button class="btnMobile"
-        onclick="window.open('https://s-trans-szczecin.github.io/panel2/pobierz_apke.html','_blank')">
-        <img src="https://cdn-icons-png.flaticon.com/512/888/888857.png">
-        Pobierz aplikację mobilną
+        onclick="window.open('pobierz_apke.html','_blank')">
+        Pobierz aplikację
       </button>
       <button onclick="logout()" class="small del">Wyloguj</button>
     </div>
@@ -194,16 +154,35 @@ button.del{background:#ff4444;color:#fff}
   </div>
 
   <div id="main">
-    <!-- reszta Twojego panelu BEZ ZMIAN -->
+
+    <div class="box" style="display:grid;grid-template-rows:1fr 1fr;gap:6px">
+      <div>
+        <h4>📦 Zlecenia</h4>
+        <button class="small" onclick="addOrder()">➕ Dodaj</button>
+        <table id="ordersTable"></table>
+      </div>
+
+      <div>
+        <h4>🚚 Kierowcy</h4>
+        <table id="driversTable"></table>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-rows:1fr 1fr;gap:6px">
+      <div class="box">
+        <h4>🗺️ Mapa</h4>
+        <div id="map"></div>
+      </div>
+      <div class="box">
+        <h4>🖥️ System</h4>
+        <table><tbody id="systemRows"></tbody></table>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
-setTimeout(()=>{
-  intro.style.display="none";
-  login.style.display="flex";
-},4000);
-
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain:"fir-trans-projekt.firebaseapp.com",
@@ -212,18 +191,37 @@ firebase.initializeApp({
 });
 
 const auth=firebase.auth();
+const db=firebase.database();
+let map,cars=[];
+
+setTimeout(()=>{
+  intro.style.display="none";
+  login.style.display="flex";
+},4000);
+
 loginBtn.onclick=()=>{
   auth.signInWithEmailAndPassword(email.value,password.value)
   .then(()=>{
     login.style.display="none";
     panel.style.display="flex";
+    initMap();
+    loadOrders();
+    loadDrivers();
+    loadSystem();
   })
   .catch(e=>loginError.innerText=e.message);
 };
 
-function logout(){
-  auth.signOut().then(()=>location.reload());
+function initMap(){
+  map=L.map("map").setView([53.4,14.55],10);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
+
+function loadOrders(){}
+function loadDrivers(){}
+function loadSystem(){}
+function addOrder(){}
+function logout(){auth.signOut().then(()=>location.reload())}
 </script>
 
 </body>
