@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Fleet Control</title>
+<title>S-TRANS | Panel Administracyjny</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -14,55 +14,48 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff;overflow:hidden}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0b0f1a;
+  color:#fff;
+}
 
-/* INTRO VIDEO */
-#introScreen{
-  position:fixed;
-  inset:0;
-  background:black;
-  z-index:2000;
+/* LOGIN */
+#login{
+  height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
 }
-#introScreen video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* LOGIN */
-#loginScreen{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:#000;
-  z-index:1000
-}
 #loginBox{
   width:320px;
-  padding:30px;
   background:#111;
+  padding:25px;
   border-radius:14px;
-  box-shadow:0 0 40px #39ff14
+  box-shadow:0 0 30px #39ff14;
 }
-#loginBox input,#loginBox button{
+#loginBox input{
   width:100%;
   padding:10px;
-  margin-top:10px
+  margin-top:10px;
 }
 #loginBox button{
+  width:100%;
+  padding:10px;
+  margin-top:15px;
   background:#39ff14;
   border:none;
   font-weight:bold;
-  cursor:pointer
+  cursor:pointer;
 }
 
 /* PANEL */
-#panel{display:none;height:100vh;flex-direction:column}
+#panel{
+  display:none;
+  height:100vh;
+  flex-direction:column;
+}
 
 /* TOPBAR */
 #topbar{
@@ -71,106 +64,80 @@ body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff;overflow:hidden}
   align-items:center;
   justify-content:space-between;
   padding:0 16px;
-  background:rgba(10,20,40,.95);
-  border-bottom:1px solid rgba(255,255,255,.1)
+  background:#0a1428;
+  border-bottom:1px solid #222;
 }
 #logo{
-  font-size:26px;
+  font-size:24px;
   font-weight:900;
-  letter-spacing:4px
+  letter-spacing:4px;
 }
-#logo .s{
+#logo span{
   color:#39ff14;
-  display:inline-block;
-  text-shadow:0 0 20px #39ff14;
-  animation:spin 6s linear infinite
-}
-@keyframes spin{
-  from{transform:rotateY(0)}
-  to{transform:rotateY(360deg)}
+  text-shadow:0 0 15px #39ff14;
 }
 
-/* KPI */
-#kpiBar{
+/* MAIN */
+#main{
+  flex:1;
   display:flex;
   gap:8px;
-  padding:6px
+  padding:8px;
 }
-.kpi{
-  flex:1;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.1);
+
+/* BOXES */
+.box{
+  background:#0f1629;
+  border:1px solid #222;
   border-radius:12px;
   padding:10px;
-  text-align:center
+  overflow:auto;
 }
-.kpi b{font-size:22px;color:#39ff14}
-
-/* DASHBOARD */
-#dashboard{
-  flex:1;
-  display:flex;
-  gap:6px;
-  padding:6px
-}
-.panelBox{
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:12px;
-  padding:8px;
-  overflow:auto
-}
-#driversBox{flex:.8}
+#driversBox{flex:1}
 #ordersBox{flex:1.2}
 
 /* TABLE */
-table{width:100%;border-collapse:collapse}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
 th,td{
   padding:6px;
   border-bottom:1px solid #333;
-  font-size:13px
+  font-size:13px;
 }
-th{color:#39ff14}
-tr:hover{background:rgba(57,255,20,.08)}
-.editBtn{
-  background:#39ff14;
-  border:none;
-  padding:3px 6px;
-  cursor:pointer
+th{
+  color:#39ff14;
+  text-align:left;
 }
-.eta{color:#39ff14;font-size:12px}
+tr:hover{
+  background:rgba(57,255,20,.08);
+}
 
 /* MAP */
 #map{
-  height:36vh;
-  margin:6px;
+  height:35vh;
+  margin:8px;
   border-radius:12px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.1)
+  border:1px solid #222;
 }
 
 /* TRUCK ICON */
 .truck-icon{
-  width:32px;
-  height:32px;
-  background:url('https://cdn-icons-png.flaticon.com/512/743/743131.png') no-repeat center;
-  background-size:contain;
-  transform-origin:center
+  width:24px;
+  height:24px;
+  background:#39ff14;
+  mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
+  -webkit-mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
+  filter:drop-shadow(0 0 6px #39ff14);
 }
 </style>
 </head>
 
 <body>
 
-<!-- INTRO -->
-<div id="introScreen">
-  <video id="introVideo" autoplay muted playsinline>
-    <source src="intro.mp4" type="video/mp4">
-  </video>
-</div>
-
 <!-- LOGIN -->
-<div id="loginScreen">
+<div id="login">
   <div id="loginBox">
     <h2>Logowanie</h2>
     <input id="email" placeholder="Email">
@@ -184,46 +151,28 @@ tr:hover{background:rgba(57,255,20,.08)}
 <div id="panel">
 
   <div id="topbar">
-    <div id="logo"><span class="s">S</span>-TRANS</div>
-    <div>
-      <button class="editBtn" onclick="newOrder()">+ Zlecenie</button>
-      <button class="editBtn" style="background:#ff3b3b" onclick="logout()">Wyloguj</button>
-    </div>
+    <div id="logo"><span>S</span>-TRANS</div>
+    <button onclick="logout()" style="background:#ff4444;border:none;padding:6px 12px;cursor:pointer">
+      Wyloguj
+    </button>
   </div>
 
-  <div id="kpiBar">
-    <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
-    <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
-    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
-  </div>
-
-  <div id="dashboard">
-    <div class="panelBox" id="driversBox">
+  <div id="main">
+    <div class="box" id="driversBox">
       <h3>Kierowcy</h3>
       <div id="driversList"></div>
     </div>
 
-    <div class="panelBox" id="ordersBox">
+    <div class="box" id="ordersBox">
       <h3>Zlecenia</h3>
       <table id="ordersTable"></table>
     </div>
   </div>
 
   <div id="map"></div>
-
 </div>
 
 <script>
-/* INTRO CONTROL – 3 SEKUNDY */
-window.onload=()=>{
-  const v=document.getElementById("introVideo");
-  setTimeout(()=>{
-    v.pause();
-    document.getElementById("introScreen").style.display="none";
-    document.getElementById("loginScreen").style.display="flex";
-  },3000);
-};
-
 /* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
@@ -234,13 +183,14 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 
-let map,markers={},routes={};
+let map;
+let markers={};
 
 /* LOGIN */
 function login(){
   auth.signInWithEmailAndPassword(email.value,password.value)
     .then(()=>{
-      loginScreen.style.display="none";
+      login.style.display="none";
       panel.style.display="flex";
       initMap();
       loadDrivers();
@@ -259,88 +209,66 @@ function initMap(){
 }
 
 /* SMOOTH MOVE */
-function smoothMove(marker,from,to){
-  let i=0,steps=30;
-  let dLat=(to[0]-from[0])/steps;
-  let dLng=(to[1]-from[1])/steps;
-  let int=setInterval(()=>{
-    if(i>=steps){clearInterval(int);return}
-    marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
+function smoothMove(marker, from, to){
+  let i=0;
+  const steps=25;
+  const dLat=(to[0]-from[0])/steps;
+  const dLng=(to[1]-from[1])/steps;
+
+  const interval=setInterval(()=>{
+    if(i>=steps){
+      clearInterval(interval);
+      return;
+    }
+    marker.setLatLng([
+      from[0]+dLat*i,
+      from[1]+dLng*i
+    ]);
     i++;
-  },70);
+  },60);
 }
 
-/* DRIVERS */
+/* DRIVERS + RUCH */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
-    let online=0,total=0;
-
     snap.forEach(d=>{
-      total++;
-      const id=d.key;
       const v=d.val();
+      const id=d.key;
       driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
-      if(v.status==="online") online++;
 
       if(!v.lat||!v.lng) return;
       const pos=[v.lat,v.lng];
 
       if(!markers[id]){
         const icon=L.divIcon({
-          html:'<div class="truck-icon"></div>',
-          iconSize:[32,32]
+          html:`<div class="truck-icon"></div>`,
+          iconSize:[24,24],
+          iconAnchor:[12,12]
         });
         markers[id]=L.marker(pos,{icon}).addTo(map);
         markers[id].last=pos;
-        routes[id]=L.polyline([pos],{color:'#39ff14'}).addTo(map);
       }else{
         smoothMove(markers[id],markers[id].last,pos);
         markers[id].last=pos;
-        routes[id].addLatLng(pos);
-      }
-
-      if(v.heading){
-        const el=markers[id].getElement();
-        if(el) el.style.transform=`rotate(${v.heading}deg)`;
       }
     });
-
-    kpiDrivers.innerText=total;
-    kpiOnline.innerText=online;
   });
 }
 
 /* ORDERS */
 function loadOrders(){
   db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
-    let count=0;
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
     snap.forEach(o=>{
-      count++;
       ordersTable.innerHTML+=`
         <tr>
           <td>${o.key}</td>
-          <td>${o.val().title}</td>
-          <td>${o.val().status||"nowe"}</td>
-          <td>
-            <button class="editBtn"
-            onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">
-            Edytuj</button>
-          </td>
+          <td>${o.val().title||""}</td>
+          <td>${o.val().status||""}</td>
         </tr>`;
     });
-    kpiOrders.innerText=count;
   });
-}
-function newOrder(){
-  const t=prompt("Tytuł zlecenia");
-  if(t) db.ref("orders").push({title:t,status:"nowe"});
-}
-function editOrder(id,t,s){
-  const nt=prompt("Tytuł",t);
-  const ns=prompt("Status",s);
-  if(nt&&ns) db.ref("orders/"+id).update({title:nt,status:ns});
 }
 </script>
 
