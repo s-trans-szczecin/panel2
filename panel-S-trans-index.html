@@ -45,15 +45,16 @@ body{
   background:#000;
 }
 #loginBox{
-  width:340px;
+  width:320px;
   background:#111;
-  padding:28px;
+  padding:24px;
   border-radius:14px;
-  box-shadow:0 0 40px #39ff14;
+  box-shadow:0 0 35px #39ff14;
 }
+#loginBox h2{text-align:center;margin:0 0 10px}
 #loginBox input,#loginBox button{
   width:100%;
-  padding:10px;
+  padding:9px;
   margin-top:10px;
 }
 #loginBox button{
@@ -72,21 +73,22 @@ body{
 
 /* TOPBAR */
 #topbar{
-  height:58px;
+  height:54px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 18px;
+  padding:0 14px;
   background:#0a1428;
   border-bottom:1px solid #222;
 }
 #logo{
-  font-size:26px;
+  font-size:24px;
   font-weight:900;
   letter-spacing:4px;
 }
 #logo span{
   color:#39ff14;
+  display:inline-block;
   animation:spin 6s linear infinite;
   text-shadow:0 0 20px #39ff14;
 }
@@ -98,32 +100,39 @@ body{
 /* KPI */
 #kpi{
   display:flex;
-  gap:10px;
-  padding:8px;
+  gap:6px;
+  padding:6px;
 }
 .kpi{
   flex:1;
   background:#0f1629;
   border:1px solid #222;
-  border-radius:12px;
-  padding:10px;
+  border-radius:10px;
+  padding:8px;
   text-align:center;
 }
-.kpi b{font-size:22px;color:#39ff14}
+.kpi b{
+  font-size:20px;
+  color:#39ff14;
+}
 
 /* MAIN */
 #main{
   flex:1;
   display:flex;
-  gap:10px;
-  padding:10px;
+  gap:6px;
+  padding:6px;
 }
 .box{
   background:#0f1629;
   border:1px solid #222;
-  border-radius:14px;
-  padding:12px;
+  border-radius:10px;
+  padding:8px;
   overflow:auto;
+}
+.box h3{
+  margin:4px 0 6px;
+  font-size:15px;
 }
 #drivers{flex:.9}
 #orders{flex:1.3}
@@ -131,36 +140,25 @@ body{
 /* TABLE */
 table{width:100%;border-collapse:collapse}
 th,td{
-  padding:6px;
+  padding:4px 6px;
   border-bottom:1px solid #333;
-  font-size:13px;
+  font-size:12px;
 }
 th{color:#39ff14;text-align:left}
 tr:hover{background:rgba(57,255,20,.08)}
 
-.btn{
-  padding:3px 6px;
-  font-size:11px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-.btn.edit{background:#39ff14}
-.btn.del{background:#ff4444;color:#fff}
-.btn.add{background:#39ff14;margin-bottom:6px}
-
 /* MAP */
 #map{
-  height:34vh;
-  margin:10px;
-  border-radius:14px;
+  height:30vh;
+  margin:6px;
+  border-radius:10px;
   border:1px solid #222;
 }
 
 /* TRUCK ICON */
 .truck{
-  width:26px;
-  height:26px;
+  width:24px;
+  height:24px;
   background:#39ff14;
   mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
   -webkit-mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
@@ -185,7 +183,7 @@ tr:hover{background:rgba(57,255,20,.08)}
     <input id="email" placeholder="Email">
     <input id="password" type="password" placeholder="Hasło">
     <button id="loginBtn">Zaloguj</button>
-    <p id="loginError" style="color:red"></p>
+    <p id="loginError" style="color:red;font-size:12px"></p>
   </div>
 </div>
 
@@ -213,7 +211,6 @@ tr:hover{background:rgba(57,255,20,.08)}
 
     <div class="box" id="orders">
       <h3>Zlecenia</h3>
-      <button class="btn add" onclick="addOrder()">+ Dodaj zlecenie</button>
       <table id="ordersTable"></table>
     </div>
   </div>
@@ -265,40 +262,49 @@ document.addEventListener("DOMContentLoaded",()=>{
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
   }
 
+  function smooth(marker,from,to){
+    let i=0,steps=25;
+    let dLat=(to[0]-from[0])/steps;
+    let dLng=(to[1]-from[1])/steps;
+    let int=setInterval(()=>{
+      if(i>=steps){clearInterval(int);return;}
+      marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
+      i++;
+    },60);
+  }
+
   function loadDrivers(){
     db.ref("drivers").on("value",snap=>{
       driversList.innerHTML="";
       let online=0,total=0;
+
       snap.forEach(d=>{
         total++;
         const v=d.val(),id=d.key;
         driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
         if(v.status==="online") online++;
+
+        if(!v.lat||!v.lng) return;
+        const pos=[v.lat,v.lng];
+
+        if(!markers[id]){
+          const icon=L.divIcon({html:'<div class="truck"></div>',iconSize:[24,24]});
+          markers[id]=L.marker(pos,{icon}).addTo(map);
+          markers[id].last=pos;
+        }else{
+          smooth(markers[id],markers[id].last,pos);
+          markers[id].last=pos;
+        }
       });
+
       kpiDrivers.innerText=total;
       kpiOnline.innerText=online;
     });
   }
 
-  window.addOrder=()=>{
-    const t=prompt("Tytuł zlecenia:");
-    if(t) db.ref("orders").push({title:t,status:"nowe"});
-  };
-
-  window.editOrder=(id,t,s)=>{
-    const nt=prompt("Tytuł:",t);
-    const ns=prompt("Status:",s);
-    if(nt && ns) db.ref("orders/"+id).update({title:nt,status:ns});
-  };
-
-  window.deleteOrder=(id)=>{
-    if(confirm("Usunąć zlecenie?")) db.ref("orders/"+id).remove();
-  };
-
   function loadOrders(){
     db.ref("orders").on("value",snap=>{
-      ordersTable.innerHTML=
-        "<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Akcje</th></tr>";
+      ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
       let c=0;
       snap.forEach(o=>{
         c++;
@@ -307,12 +313,6 @@ document.addEventListener("DOMContentLoaded",()=>{
           <td>${o.key}</td>
           <td>${o.val().title||""}</td>
           <td>${o.val().status||""}</td>
-          <td>
-            <button class="btn edit"
-              onclick="editOrder('${o.key}','${o.val().title||""}','${o.val().status||""}')">Edytuj</button>
-            <button class="btn del"
-              onclick="deleteOrder('${o.key}')">Usuń</button>
-          </td>
         </tr>`;
       });
       kpiOrders.innerText=c;
