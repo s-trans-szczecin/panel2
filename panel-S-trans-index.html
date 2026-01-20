@@ -207,6 +207,13 @@ th{color:#39ff14}
 </div>
 
 <script>
+/* ELEMENTY DOM – KLUCZOWA NAPRAWA */
+const intro = document.getElementById("intro");
+const login = document.getElementById("login");
+const panel = document.getElementById("panel");
+const driversList = document.getElementById("driversList");
+const ordersTable = document.getElementById("ordersTable");
+
 /* INTRO → LOGIN */
 setTimeout(()=>{
   intro.style.display="none";
@@ -260,7 +267,7 @@ function smoothMove(marker,from,to){
   },60);
 }
 
-/* DRIVERS */
+/* DRIVERS – PRZYWRÓCONE */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
@@ -268,8 +275,10 @@ function loadDrivers(){
       const v=d.val();
       const id=d.key;
       driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
+
       if(!v.lat||!v.lng) return;
       const pos=[v.lat,v.lng];
+
       if(!markers[id]){
         const icon=L.divIcon({
           html:`<div class="truck-icon"></div>`,
@@ -299,13 +308,9 @@ function loadOrders(){
           <td>${o.val().status||""}</td>
           <td>
             <button class="btn gray"
-              onclick="editOrder('${o.key}','${o.val().title||""}','${o.val().status||""}')">
-              Edytuj
-            </button>
+              onclick="editOrder('${o.key}','${o.val().title||""}','${o.val().status||""}')">Edytuj</button>
             <button class="btn red"
-              onclick="deleteOrder('${o.key}')">
-              Usuń
-            </button>
+              onclick="deleteOrder('${o.key}')">Usuń</button>
           </td>
         </tr>`;
     });
@@ -314,18 +319,13 @@ function loadOrders(){
 
 function newOrder(){
   const title=prompt("Tytuł zlecenia:");
-  if(!title) return;
-  db.ref("orders").push({title:title,status:"nowe"});
+  if(title) db.ref("orders").push({title:title,status:"nowe"});
 }
-
-function editOrder(id,title,status){
-  const nt=prompt("Tytuł:",title);
-  const ns=prompt("Status:",status);
-  if(nt && ns){
-    db.ref("orders/"+id).update({title:nt,status:ns});
-  }
+function editOrder(id,t,s){
+  const nt=prompt("Tytuł:",t);
+  const ns=prompt("Status:",s);
+  if(nt && ns) db.ref("orders/"+id).update({title:nt,status:ns});
 }
-
 function deleteOrder(id){
   if(confirm("Usunąć zlecenie?")){
     db.ref("orders/"+id).remove();
