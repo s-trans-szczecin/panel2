@@ -75,6 +75,30 @@ button.del{background:#ff4444;color:#fff}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 3px;vertical-align:middle}
 .dot.green{background:#39ff14;box-shadow:0 0 6px rgba(57,255,20,.7)}
 .dot.red{background:#ff4b4b;box-shadow:0 0 6px rgba(255,75,75,.7)}
+
+/* NEW BUTTON */
+.btnMobile{
+  background:#39ff14;
+  color:#000;
+  font-weight:900;
+  padding:6px 12px;
+  border-radius:10px;
+  border:1px solid #2be214;
+  box-shadow:0 0 18px rgba(57,255,20,.35);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  transition:transform .1s ease, box-shadow .2s ease;
+}
+.btnMobile:hover{
+  transform:translateY(-1px);
+  box-shadow:0 0 24px rgba(57,255,20,.55);
+}
+.btnMobile img{
+  width:18px;
+  height:18px;
+}
 </style>
 </head>
 
@@ -101,7 +125,8 @@ button.del{background:#ff4444;color:#fff}
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
     <div style="display:flex;gap:8px;align-items:center">
-      <button onclick="location.href='https://s-trans-szczecin.github.io/panel2/pobierz_apke.html'" class="small">
+      <button class="btnMobile" onclick="window.open('https://s-trans-szczecin.github.io/panel2/pobierz_apke.html','_blank')">
+        <img src="https://cdn-icons-png.flaticon.com/512/888/888857.png" alt="mobile">
         Pobierz aplikację mobilną
       </button>
       <button onclick="logout()" class="small del">Wyloguj</button>
