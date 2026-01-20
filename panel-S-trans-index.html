@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Panel Administracyjny</title>
+<title>S-TRANS | Fleet Control</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -19,14 +19,31 @@ body{
   font-family:Arial,Helvetica,sans-serif;
   background:#0b0f1a;
   color:#fff;
+  overflow:hidden;
+}
+
+/* INTRO */
+#introScreen{
+  position:fixed;
+  inset:0;
+  background:black;
+  z-index:3000;
+}
+#introScreen video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
 /* LOGIN */
-#login{
-  height:100vh;
-  display:flex;
+#loginScreen{
+  position:fixed;
+  inset:0;
+  display:none;
   align-items:center;
   justify-content:center;
+  background:#000;
+  z-index:2000;
 }
 #loginBox{
   width:320px;
@@ -75,6 +92,12 @@ body{
 #logo span{
   color:#39ff14;
   text-shadow:0 0 15px #39ff14;
+  display:inline-block;
+  animation:spin 6s linear infinite;
+}
+@keyframes spin{
+  from{transform:rotateY(0deg)}
+  to{transform:rotateY(360deg)}
 }
 
 /* MAIN */
@@ -96,24 +119,6 @@ body{
 #driversBox{flex:1}
 #ordersBox{flex:1.2}
 
-/* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:6px;
-  border-bottom:1px solid #333;
-  font-size:13px;
-}
-th{
-  color:#39ff14;
-  text-align:left;
-}
-tr:hover{
-  background:rgba(57,255,20,.08);
-}
-
 /* MAP */
 #map{
   height:35vh;
@@ -122,7 +127,7 @@ tr:hover{
   border:1px solid #222;
 }
 
-/* TRUCK ICON */
+/* TRUCK */
 .truck-icon{
   width:24px;
   height:24px;
@@ -136,8 +141,15 @@ tr:hover{
 
 <body>
 
+<!-- INTRO -->
+<div id="introScreen">
+  <video id="introVideo" autoplay muted playsinline>
+    <source src="intro.mp4" type="video/mp4">
+  </video>
+</div>
+
 <!-- LOGIN -->
-<div id="login">
+<div id="loginScreen">
   <div id="loginBox">
     <h2>Logowanie</h2>
     <input id="email" placeholder="Email">
@@ -149,7 +161,6 @@ tr:hover{
 
 <!-- PANEL -->
 <div id="panel">
-
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
     <button onclick="logout()" style="background:#ff4444;border:none;padding:6px 12px;cursor:pointer">
@@ -162,7 +173,6 @@ tr:hover{
       <h3>Kierowcy</h3>
       <div id="driversList"></div>
     </div>
-
     <div class="box" id="ordersBox">
       <h3>Zlecenia</h3>
       <table id="ordersTable"></table>
@@ -173,6 +183,15 @@ tr:hover{
 </div>
 
 <script>
+/* INTRO 3s */
+window.onload=()=>{
+  setTimeout(()=>{
+    introVideo.pause();
+    introScreen.style.display="none";
+    loginScreen.style.display="flex";
+  },3000);
+};
+
 /* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
@@ -190,7 +209,7 @@ let markers={};
 function login(){
   auth.signInWithEmailAndPassword(email.value,password.value)
     .then(()=>{
-      login.style.display="none";
+      loginScreen.style.display="none";
       panel.style.display="flex";
       initMap();
       loadDrivers();
@@ -209,43 +228,29 @@ function initMap(){
 }
 
 /* SMOOTH MOVE */
-function smoothMove(marker, from, to){
+function smoothMove(marker,from,to){
   let i=0;
-  const steps=25;
+  const steps=30;
   const dLat=(to[0]-from[0])/steps;
   const dLng=(to[1]-from[1])/steps;
-
-  const interval=setInterval(()=>{
-    if(i>=steps){
-      clearInterval(interval);
-      return;
-    }
-    marker.setLatLng([
-      from[0]+dLat*i,
-      from[1]+dLng*i
-    ]);
+  const int=setInterval(()=>{
+    if(i>=steps){clearInterval(int);return;}
+    marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
     i++;
   },60);
 }
 
-/* DRIVERS + RUCH */
+/* DRIVERS */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
     snap.forEach(d=>{
-      const v=d.val();
-      const id=d.key;
+      const v=d.val(), id=d.key;
       driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
-
       if(!v.lat||!v.lng) return;
       const pos=[v.lat,v.lng];
-
       if(!markers[id]){
-        const icon=L.divIcon({
-          html:`<div class="truck-icon"></div>`,
-          iconSize:[24,24],
-          iconAnchor:[12,12]
-        });
+        const icon=L.divIcon({html:`<div class="truck-icon"></div>`,iconSize:[24,24]});
         markers[id]=L.marker(pos,{icon}).addTo(map);
         markers[id].last=pos;
       }else{
@@ -262,11 +267,11 @@ function loadOrders(){
     ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
     snap.forEach(o=>{
       ordersTable.innerHTML+=`
-        <tr>
-          <td>${o.key}</td>
-          <td>${o.val().title||""}</td>
-          <td>${o.val().status||""}</td>
-        </tr>`;
+      <tr>
+        <td>${o.key}</td>
+        <td>${o.val().title||""}</td>
+        <td>${o.val().status||""}</td>
+      </tr>`;
     });
   });
 }
