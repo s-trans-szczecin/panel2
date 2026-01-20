@@ -2,46 +2,149 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>S-TRANS | Panel</title>
+<title>S-TRANS | Fleet Control</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0b0f1a;
+  color:#fff;
+}
 
+/* ================= LOGIN ================= */
 #loginScreen{
-  position:fixed;inset:0;
-  display:flex;align-items:center;justify-content:center;
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
   background:#000;
 }
 #loginBox{
-  width:320px;padding:30px;
-  background:#111;border-radius:10px;
+  width:320px; padding:30px;
+  background:#111; border-radius:10px;
 }
-input,button{
-  width:100%;padding:10px;margin-top:10px;
+#loginBox input,#loginBox button{
+  width:100%; padding:10px; margin-top:10px;
 }
-button{background:#39ff14;border:none;font-weight:bold;cursor:pointer}
+#loginBox button{
+  background:#39ff14; border:none; font-weight:bold; cursor:pointer;
+}
 
-#panel{display:none;height:100vh;flex-direction:column}
-#topbar{
-  height:60px;background:#111;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 20px;
+/* ================= PANEL ================= */
+#panel{
+  display:none;
+  height:100vh;
+  flex-direction:column;
 }
-#dashboard{flex:1;display:flex;padding:10px;gap:10px}
-.box{flex:1;background:#151515;padding:10px;border-radius:8px}
-#map{height:40vh}
+
+/* TOPBAR */
+#topbar{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  background:rgba(10,20,40,0.9);
+  backdrop-filter:blur(15px);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+/* LOGO */
+#logo{
+  font-size:26px;
+  letter-spacing:4px;
+  font-weight:bold;
+}
+#logo .s{
+  color:#39ff14;
+  display:inline-block;
+  text-shadow:0 0 10px #39ff14,0 0 25px #39ff14;
+  animation:spin 6s linear infinite;
+}
+@keyframes spin{
+  from{transform:rotateY(0deg)}
+  to{transform:rotateY(360deg)}
+}
+
+/* TOP BUTTONS */
+#topButtons button{
+  margin-left:10px;
+  padding:8px 14px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+}
+.btn-main{
+  background:linear-gradient(135deg,#39ff14,#1faa0a);
+}
+.btn-warn{
+  background:#ff3b3b;
+  color:#fff;
+}
+
+/* DASHBOARD */
+#dashboard{
+  flex:1;
+  display:flex;
+  gap:10px;
+  padding:10px;
+}
+
+/* PANELS */
+.panelBox{
+  flex:1;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;
+  padding:10px;
+  overflow:auto;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #333;
+}
+th{
+  color:#39ff14;
+}
+tr:hover{
+  background:rgba(57,255,20,0.08);
+}
+.editBtn{
+  background:#39ff14;
+  border:none;
+  padding:4px 8px;
+  cursor:pointer;
+}
+
+/* MAP */
+#map{
+  height:40vh;
+  margin:10px;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.1);
+}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginScreen">
   <div id="loginBox">
     <h2>Logowanie</h2>
@@ -52,24 +155,32 @@ button{background:#39ff14;border:none;font-weight:bold;cursor:pointer}
   </div>
 </div>
 
+<!-- PANEL -->
 <div id="panel">
+
   <div id="topbar">
-    <b>S-TRANS</b>
-    <button onclick="logout()">Wyloguj</button>
+    <div id="logo"><span class="s">S</span>-TRANS</div>
+    <div id="topButtons">
+      <button class="btn-main" onclick="newOrder()">+ Zlecenie</button>
+      <button class="btn-main" onclick="centerMap()">Centruj mapę</button>
+      <button class="btn-warn" onclick="logout()">Wyloguj</button>
+    </div>
   </div>
 
   <div id="dashboard">
-    <div class="box">
-      <h3>Zlecenia</h3>
-      <table id="ordersTable"></table>
-    </div>
-    <div class="box">
+    <div class="panelBox">
       <h3>Kierowcy</h3>
       <div id="driversList"></div>
+    </div>
+
+    <div class="panelBox">
+      <h3>Zlecenia</h3>
+      <table id="ordersTable"></table>
     </div>
   </div>
 
   <div id="map"></div>
+
 </div>
 
 <script>
@@ -84,6 +195,7 @@ const auth=firebase.auth();
 const db=firebase.database();
 let map,markers={};
 
+/* LOGIN */
 function login(){
   const email=document.getElementById("email").value;
   const pass=document.getElementById("password").value;
@@ -102,17 +214,22 @@ function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
+/* MAP */
 function initMap(){
   map=L.map("map").setView([53.4,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
+function centerMap(){
+  map.setView([53.4,14.55],11);
+}
 
+/* DRIVERS */
 function loadDrivers(){
   db.ref("drivers").on("value",s=>{
     driversList.innerHTML="";
     s.forEach(d=>{
       const v=d.val();
-      driversList.innerHTML+=`<div>${v.name||d.key}</div>`;
+      driversList.innerHTML+=`<div>🚚 ${v.name||d.key}</div>`;
       if(v.lat&&v.lng){
         if(!markers[d.key]){
           markers[d.key]=L.marker([v.lat,v.lng]).addTo(map);
@@ -124,14 +241,31 @@ function loadDrivers(){
   });
 }
 
+/* ORDERS */
 function loadOrders(){
-  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th></tr>";
+  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
   db.ref("orders").on("value",s=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th></tr>";
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
     s.forEach(o=>{
-      ordersTable.innerHTML+=`<tr><td>${o.key}</td><td>${o.val().title}</td></tr>`;
+      ordersTable.innerHTML+=`
+        <tr>
+          <td>${o.key}</td>
+          <td>${o.val().title}</td>
+          <td>${o.val().status||"nowe"}</td>
+          <td><button class="editBtn" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">Edytuj</button></td>
+        </tr>`;
     });
   });
+}
+
+function newOrder(){
+  const t=prompt("Tytuł zlecenia");
+  if(t)db.ref("orders").push({title:t,status:"nowe"});
+}
+function editOrder(id,t,s){
+  const nt=prompt("Tytuł",t);
+  const ns=prompt("Status",s);
+  if(nt&&ns)db.ref("orders/"+id).update({title:nt,status:ns});
 }
 </script>
 
