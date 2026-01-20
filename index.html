@@ -14,135 +14,119 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#0b0f1a;
-  color:#fff;
-}
+body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
 
 /* LOGIN */
 #loginScreen{
-  position:fixed; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  background:#000;
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#000;z-index:1000
 }
 #loginBox{
-  width:320px; padding:30px;
-  background:#111; border-radius:10px;
+  width:320px;padding:30px;
+  background:#111;border-radius:12px;
+  box-shadow:0 0 30px #39ff14
 }
 #loginBox input,#loginBox button{
-  width:100%; padding:10px; margin-top:10px;
+  width:100%;padding:10px;margin-top:10px
 }
 #loginBox button{
-  background:#39ff14; border:none; font-weight:bold; cursor:pointer;
+  background:#39ff14;border:none;font-weight:bold;cursor:pointer
 }
 
 /* PANEL */
-#panel{
-  display:none;
-  height:100vh;
-  flex-direction:column;
-}
+#panel{display:none;height:100vh;flex-direction:column}
 
 /* TOPBAR */
 #topbar{
   height:56px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;
-  background:rgba(10,20,40,0.9);
-  backdrop-filter:blur(15px);
-  border-bottom:1px solid rgba(255,255,255,0.1);
+  background:rgba(10,20,40,.95);
+  border-bottom:1px solid rgba(255,255,255,.1)
 }
-
-/* LOGO */
 #logo{
-  font-size:24px;
-  letter-spacing:3px;
-  font-weight:bold;
+  font-size:26px;font-weight:900;letter-spacing:4px
 }
 #logo .s{
   color:#39ff14;
   display:inline-block;
-  text-shadow:0 0 10px #39ff14,0 0 25px #39ff14;
-  animation:spin 6s linear infinite;
+  text-shadow:0 0 15px #39ff14;
+  animation:spin 6s linear infinite
 }
 @keyframes spin{
-  from{transform:rotateY(0deg)}
+  from{transform:rotateY(0)}
   to{transform:rotateY(360deg)}
 }
 
+/* KPI */
+#kpiBar{
+  display:flex;gap:8px;padding:6px
+}
+.kpi{
+  flex:1;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;
+  padding:10px;text-align:center
+}
+.kpi b{font-size:22px;color:#39ff14}
+
 /* BUTTONS */
 #topButtons button{
-  margin-left:6px;
-  padding:6px 12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
+  margin-left:6px;padding:6px 12px;
+  border:none;border-radius:6px;
+  font-weight:bold;cursor:pointer
 }
-.btn-main{
-  background:linear-gradient(135deg,#39ff14,#1faa0a);
-}
-.btn-warn{
-  background:#ff3b3b;
-  color:#fff;
-}
+.btn-main{background:linear-gradient(135deg,#39ff14,#1faa0a)}
+.btn-warn{background:#ff3b3b;color:#fff}
 
 /* DASHBOARD */
 #dashboard{
   flex:1;
   display:flex;
-  gap:6px;               /* 🔥 MNIEJSZA PRZERWA */
-  padding:6px;           /* 🔥 MNIEJSZE MARGINESY */
+  gap:6px;
+  padding:6px
 }
-
-/* PANELS */
 .panelBox{
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;
   padding:8px;
-  overflow:auto;
+  overflow:auto
 }
-
-/* PROPORCJE */
-#driversBox{flex:0.9}
-#ordersBox{flex:1.1}
+#driversBox{flex:.8}
+#ordersBox{flex:1.2}
 
 /* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-}
+table{width:100%;border-collapse:collapse}
 th,td{
   padding:6px;
   border-bottom:1px solid #333;
-  font-size:13px;
+  font-size:13px
 }
-th{
-  color:#39ff14;
-}
-tr:hover{
-  background:rgba(57,255,20,0.08);
-}
+th{color:#39ff14}
+tr:hover{background:rgba(57,255,20,.08)}
 .editBtn{
-  background:#39ff14;
-  border:none;
-  padding:3px 6px;
-  cursor:pointer;
-  font-size:12px;
+  background:#39ff14;border:none;
+  padding:3px 6px;cursor:pointer
 }
 
 /* MAP */
 #map{
-  height:36vh;           /* 🔥 LEKKO MNIEJSZA */
+  height:36vh;
   margin:6px;
-  border-radius:10px;
+  border-radius:12px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,.1)
+}
+
+/* TRUCK ICON */
+.truck-icon{
+  width:32px;height:32px;
+  background:url('https://cdn-icons-png.flaticon.com/512/743/743131.png') no-repeat center;
+  background-size:contain;
+  transform-origin:center
 }
 </style>
 </head>
@@ -172,6 +156,12 @@ tr:hover{
     </div>
   </div>
 
+  <div id="kpiBar">
+    <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
+    <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
+    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
+  </div>
+
   <div id="dashboard">
     <div class="panelBox" id="driversBox">
       <h3>Kierowcy</h3>
@@ -189,35 +179,35 @@ tr:hover{
 </div>
 
 <script>
+/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain:"fir-trans-projekt.firebaseapp.com",
   databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:"fir-trans-projekt"
 });
-
 const auth=firebase.auth();
 const db=firebase.database();
-let map,markers={};
 
+let map, markers={}, routes={};
+
+/* LOGIN */
 function login(){
-  const email=emailInput=document.getElementById("email").value;
-  const pass=document.getElementById("password").value;
-  const err=document.getElementById("loginError");
-
-  auth.signInWithEmailAndPassword(email,pass)
+  auth.signInWithEmailAndPassword(email.value,password.value)
     .then(()=>{
       loginScreen.style.display="none";
       panel.style.display="flex";
-      initMap();loadOrders();loadDrivers();
+      initMap();
+      loadDrivers();
+      loadOrders();
     })
-    .catch(e=>err.innerText=e.message);
+    .catch(e=>loginError.innerText=e.message);
 }
-
 function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
+/* MAP */
 function initMap(){
   map=L.map("map").setView([53.4,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
@@ -226,28 +216,77 @@ function centerMap(){
   map.setView([53.4,14.55],11);
 }
 
+/* SMOOTH MOVE */
+function smoothMove(marker,from,to){
+  let i=0,steps=30;
+  let dLat=(to[0]-from[0])/steps;
+  let dLng=(to[1]-from[1])/steps;
+  let int=setInterval(()=>{
+    if(i>=steps){clearInterval(int);return}
+    marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
+    i++;
+  },70);
+}
+
+/* DRIVERS + TRACKING */
 function loadDrivers(){
-  db.ref("drivers").on("value",s=>{
+  db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
-    s.forEach(d=>{
+    let online=0,total=0;
+
+    snap.forEach(d=>{
+      total++;
+      const id=d.key;
       const v=d.val();
-      driversList.innerHTML+=`<div>🚚 ${v.name||d.key}</div>`;
-      if(v.lat&&v.lng){
-        if(!markers[d.key]){
-          markers[d.key]=L.marker([v.lat,v.lng]).addTo(map);
-        }else{
-          markers[d.key].setLatLng([v.lat,v.lng]);
+
+      driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
+      if(v.status==="online") online++;
+
+      if(!v.lat||!v.lng) return;
+      const pos=[v.lat,v.lng];
+
+      if(!markers[id]){
+        const icon=L.divIcon({
+          className:'',
+          html:'<div class="truck-icon"></div>',
+          iconSize:[32,32]
+        });
+        markers[id]=L.marker(pos,{icon}).addTo(map);
+        markers[id].last=pos;
+        routes[id]=L.polyline([pos],{color:'#39ff14'}).addTo(map);
+      }else{
+        smoothMove(markers[id],markers[id].last,pos);
+        markers[id].last=pos;
+        routes[id].addLatLng(pos);
+        if(routes[id].getLatLngs().length>50){
+          routes[id].setLatLngs(routes[id].getLatLngs().slice(-50));
         }
       }
+
+      if(v.heading){
+        const el=markers[id].getElement();
+        if(el) el.style.transform=`rotate(${v.heading}deg)`;
+      }
+
+      markers[id].bindPopup(`
+        <b>${v.name||"Kierowca"}</b><br>
+        Prędkość: ${v.speed||"--"} km/h<br>
+        Status: ${v.status||"?"}
+      `);
     });
+
+    kpiDrivers.innerText=total;
+    kpiOnline.innerText=online;
   });
 }
 
+/* ORDERS */
 function loadOrders(){
-  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
-  db.ref("orders").on("value",s=>{
+  db.ref("orders").on("value",snap=>{
     ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
-    s.forEach(o=>{
+    let count=0;
+    snap.forEach(o=>{
+      count++;
       ordersTable.innerHTML+=`
         <tr>
           <td>${o.key}</td>
@@ -255,23 +294,23 @@ function loadOrders(){
           <td>${o.val().status||"nowe"}</td>
           <td>
             <button class="editBtn"
-              onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">
-              Edytuj
-            </button>
+            onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">
+            Edytuj</button>
           </td>
         </tr>`;
     });
+    kpiOrders.innerText=count;
   });
 }
 
 function newOrder(){
   const t=prompt("Tytuł zlecenia");
-  if(t)db.ref("orders").push({title:t,status:"nowe"});
+  if(t) db.ref("orders").push({title:t,status:"nowe"});
 }
 function editOrder(id,t,s){
   const nt=prompt("Tytuł",t);
   const ns=prompt("Status",s);
-  if(nt&&ns)db.ref("orders/"+id).update({title:nt,status:ns});
+  if(nt&&ns) db.ref("orders/"+id).update({title:nt,status:ns});
 }
 </script>
 
