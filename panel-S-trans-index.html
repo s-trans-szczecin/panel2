@@ -16,181 +16,122 @@
 <style>
 body{
   margin:0;
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:Segoe UI,Arial;
   background:#0b0f1a;
   color:#fff;
   overflow:hidden;
 }
 
 /* INTRO */
-#introScreen{
-  position:fixed;
-  inset:0;
-  background:black;
-  z-index:3000;
-}
-#introScreen video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+#intro{position:fixed;inset:0;background:black;z-index:3000}
+#intro video{width:100%;height:100%;object-fit:cover}
 
 /* LOGIN */
-#loginScreen{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:#000;
-  z-index:2000;
-}
+#login{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000}
 #loginBox{
-  width:320px;
-  background:#111;
-  padding:25px;
-  border-radius:14px;
-  box-shadow:0 0 30px #39ff14;
+  width:340px;background:#111;padding:28px;border-radius:14px;
+  box-shadow:0 0 40px #39ff14
 }
-#loginBox input{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-}
-#loginBox button{
-  width:100%;
-  padding:10px;
-  margin-top:15px;
-  background:#39ff14;
-  border:none;
-  font-weight:bold;
-  cursor:pointer;
-}
+#loginBox input,#loginBox button{width:100%;padding:10px;margin-top:10px}
+#loginBox button{background:#39ff14;border:none;font-weight:bold}
 
 /* PANEL */
-#panel{
-  display:none;
-  height:100vh;
-  flex-direction:column;
-}
+#panel{display:none;height:100vh;flex-direction:column}
 
 /* TOPBAR */
 #topbar{
-  height:56px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 16px;
-  background:#0a1428;
-  border-bottom:1px solid #222;
+  height:58px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;background:#0a1428;border-bottom:1px solid #222
 }
-#logo{
-  font-size:24px;
-  font-weight:900;
-  letter-spacing:4px;
-}
+#logo{font-size:26px;font-weight:900;letter-spacing:4px}
 #logo span{
-  color:#39ff14;
-  text-shadow:0 0 15px #39ff14;
-  display:inline-block;
+  color:#39ff14;display:inline-block;
   animation:spin 6s linear infinite;
+  text-shadow:0 0 20px #39ff14
 }
-@keyframes spin{
-  from{transform:rotateY(0deg)}
-  to{transform:rotateY(360deg)}
+@keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+
+/* KPI */
+#kpi{display:flex;gap:10px;padding:8px}
+.kpi{
+  flex:1;background:#0f1629;border:1px solid #222;
+  border-radius:12px;padding:10px;text-align:center
 }
+.kpi b{font-size:22px;color:#39ff14}
 
 /* MAIN */
-#main{
-  flex:1;
-  display:flex;
-  gap:8px;
-  padding:8px;
-}
-
-/* BOXES */
+#main{flex:1;display:flex;gap:10px;padding:10px}
 .box{
-  background:#0f1629;
-  border:1px solid #222;
-  border-radius:12px;
-  padding:10px;
-  overflow:auto;
+  background:#0f1629;border:1px solid #222;border-radius:14px;
+  padding:12px;overflow:auto
 }
-#driversBox{flex:1}
-#ordersBox{flex:1.2}
+#drivers{flex:1}
+#orders{flex:1.2}
 
 /* MAP */
 #map{
-  height:35vh;
-  margin:8px;
-  border-radius:12px;
-  border:1px solid #222;
+  height:34vh;margin:10px;border-radius:14px;border:1px solid #222
 }
 
-/* TRUCK */
-.truck-icon{
-  width:24px;
-  height:24px;
+/* VEHICLE ICON */
+.vehicle{
+  width:28px;height:28px;
   background:#39ff14;
-  mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
-  -webkit-mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
-  filter:drop-shadow(0 0 6px #39ff14);
+  mask:url("https://www.svgrepo.com/show/475656/truck.svg") center/contain no-repeat;
+  -webkit-mask:url("https://www.svgrepo.com/show/475656/truck.svg") center/contain no-repeat;
+  filter:drop-shadow(0 0 8px #39ff14);
+  transition:transform .2s linear
 }
 </style>
 </head>
 
 <body>
 
-<!-- INTRO -->
-<div id="introScreen">
-  <video id="introVideo" autoplay muted playsinline>
+<div id="intro">
+  <video autoplay muted playsinline>
     <source src="intro.mp4" type="video/mp4">
   </video>
 </div>
 
-<!-- LOGIN -->
-<div id="loginScreen">
+<div id="login">
   <div id="loginBox">
     <h2>Logowanie</h2>
     <input id="email" placeholder="Email">
     <input id="password" type="password" placeholder="Hasło">
-    <button onclick="login()">Zaloguj</button>
+    <button id="loginBtn">Zaloguj</button>
     <p id="loginError" style="color:red"></p>
   </div>
 </div>
 
-<!-- PANEL -->
 <div id="panel">
+
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
-    <button onclick="logout()" style="background:#ff4444;border:none;padding:6px 12px;cursor:pointer">
-      Wyloguj
-    </button>
+    <button onclick="logout()" style="background:#ff4444;border:none;padding:6px 12px;color:#fff">Wyloguj</button>
+  </div>
+
+  <div id="kpi">
+    <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
+    <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
+    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
   </div>
 
   <div id="main">
-    <div class="box" id="driversBox">
-      <h3>Kierowcy</h3>
-      <div id="driversList"></div>
-    </div>
-    <div class="box" id="ordersBox">
-      <h3>Zlecenia</h3>
-      <table id="ordersTable"></table>
-    </div>
+    <div class="box" id="drivers"><h3>Kierowcy (ETA / km / km/h)</h3><div id="driversList"></div></div>
+    <div class="box" id="orders"><h3>Zlecenia</h3><table id="ordersTable"></table></div>
   </div>
 
   <div id="map"></div>
 </div>
 
 <script>
-/* INTRO 3s */
-window.onload=()=>{
-  setTimeout(()=>{
-    introVideo.pause();
-    introScreen.style.display="none";
-    loginScreen.style.display="flex";
-  },3000);
-};
+document.addEventListener("DOMContentLoaded",()=>{
+
+/* INTRO */
+setTimeout(()=>{
+  document.getElementById("intro").style.display="none";
+  document.getElementById("login").style.display="flex";
+},3000);
 
 /* FIREBASE */
 firebase.initializeApp({
@@ -202,24 +143,21 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 
-let map;
-let markers={};
+let map,markers={},routes={},stats={};
 
 /* LOGIN */
-function login(){
+loginBtn.onclick=()=>{
   auth.signInWithEmailAndPassword(email.value,password.value)
-    .then(()=>{
-      loginScreen.style.display="none";
-      panel.style.display="flex";
-      initMap();
-      loadDrivers();
-      loadOrders();
-    })
-    .catch(e=>loginError.innerText=e.message);
-}
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
+  .then(()=>{
+    login.style.display="none";
+    panel.style.display="flex";
+    initMap();
+    loadDrivers();
+    loadOrders();
+  })
+  .catch(e=>loginError.innerText=e.message);
+};
+window.logout=()=>auth.signOut().then(()=>location.reload());
 
 /* MAP */
 function initMap(){
@@ -227,37 +165,58 @@ function initMap(){
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
-/* SMOOTH MOVE */
-function smoothMove(marker,from,to){
-  let i=0;
-  const steps=30;
-  const dLat=(to[0]-from[0])/steps;
-  const dLng=(to[1]-from[1])/steps;
-  const int=setInterval(()=>{
-    if(i>=steps){clearInterval(int);return;}
-    marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
-    i++;
-  },60);
+/* DISTANCE */
+function km(a,b){
+  const R=6371;
+  const dLat=(b[0]-a[0])*Math.PI/180;
+  const dLng=(b[1]-a[1])*Math.PI/180;
+  const s=Math.sin(dLat/2)**2+
+    Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*
+    Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
 }
 
 /* DRIVERS */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
+    let total=0,online=0;
+
     snap.forEach(d=>{
-      const v=d.val(), id=d.key;
-      driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
+      total++;
+      const v=d.val(),id=d.key;
+      if(v.status==="online") online++;
       if(!v.lat||!v.lng) return;
+
       const pos=[v.lat,v.lng];
+      if(!stats[id]) stats[id]={km:0,last:pos,time:Date.now()};
+
+      const dist=km(stats[id].last,pos);
+      const dt=(Date.now()-stats[id].time)/3600000;
+      const speed=dt>0?(dist/dt):0;
+      stats[id].km+=dist;
+      stats[id].last=pos;
+      stats[id].time=Date.now();
+
+      const eta=speed>0?(120/speed):0;
+
+      driversList.innerHTML+=`
+        🚚 ${v.name||id}<br>
+        <small>km: ${stats[id].km.toFixed(1)} | km/h: ${speed.toFixed(1)} | ETA: ${eta.toFixed(1)}h</small><hr>
+      `;
+
       if(!markers[id]){
-        const icon=L.divIcon({html:`<div class="truck-icon"></div>`,iconSize:[24,24]});
+        const icon=L.divIcon({html:'<div class="vehicle"></div>',iconSize:[28,28]});
         markers[id]=L.marker(pos,{icon}).addTo(map);
-        markers[id].last=pos;
+        routes[id]=L.polyline([pos],{color:'#39ff14'}).addTo(map);
       }else{
-        smoothMove(markers[id],markers[id].last,pos);
-        markers[id].last=pos;
+        markers[id].setLatLng(pos);
+        routes[id].addLatLng(pos);
       }
     });
+
+    kpiDrivers.innerText=total;
+    kpiOnline.innerText=online;
   });
 }
 
@@ -265,16 +224,18 @@ function loadDrivers(){
 function loadOrders(){
   db.ref("orders").on("value",snap=>{
     ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
+    let c=0;
     snap.forEach(o=>{
+      c++;
       ordersTable.innerHTML+=`
-      <tr>
-        <td>${o.key}</td>
-        <td>${o.val().title||""}</td>
-        <td>${o.val().status||""}</td>
-      </tr>`;
+        <tr><td>${o.key}</td><td>${o.val().title||""}</td><td>${o.val().status||""}</td></tr>
+      `;
     });
+    kpiOrders.innerText=c;
   });
 }
+
+});
 </script>
 
 </body>
