@@ -159,7 +159,7 @@ function loadOrders(){
       ordersTable.innerHTML+=`
       <tr>
         <td>${o.key}</td>
-        <td>${o.val().title||""}</td>
+        <td>${o.val().title||""}</td> 
         <td>${o.val().status||""}</td>
         <td>
           <button class="small edit" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status}')">✏</button>
