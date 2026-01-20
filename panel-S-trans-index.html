@@ -36,51 +36,112 @@ body{
 #loginBox button{background:#39ff14;border:none;font-weight:bold}
 
 /* PANEL */
-#panel{display:none;height:100vh;flex-direction:column}
+#panel{
+  display:none;
+  height:100vh;
+  flex-direction:column;
+}
 
 /* TOPBAR */
 #topbar{
-  height:58px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 18px;background:#0a1428;border-bottom:1px solid #222
+  height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  background:#0a1428;
+  border-bottom:1px solid #222;
 }
-#logo{font-size:26px;font-weight:900;letter-spacing:4px}
+#logo{
+  font-size:26px;
+  font-weight:900;
+  letter-spacing:4px;
+}
 #logo span{
-  color:#39ff14;display:inline-block;
-  animation:spin 6s linear infinite;
-  text-shadow:0 0 20px #39ff14
+  color:#39ff14;
+  text-shadow:0 0 20px #39ff14;
 }
-@keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+
+/* ACTION BAR */
+#actions{
+  display:flex;
+  gap:8px;
+}
+.actionBtn{
+  background:#111;
+  border:1px solid #39ff14;
+  color:#39ff14;
+  padding:6px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:12px;
+}
+.actionBtn:hover{
+  background:#39ff14;
+  color:#000;
+}
 
 /* KPI */
-#kpi{display:flex;gap:10px;padding:8px}
+#kpi{
+  display:flex;
+  gap:8px;
+  padding:6px;
+}
 .kpi{
-  flex:1;background:#0f1629;border:1px solid #222;
-  border-radius:12px;padding:10px;text-align:center
+  flex:1;
+  background:#0f1629;
+  border:1px solid #222;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
 }
 .kpi b{font-size:22px;color:#39ff14}
 
-/* MAIN */
-#main{flex:1;display:flex;gap:10px;padding:10px}
-.box{
-  background:#0f1629;border:1px solid #222;border-radius:14px;
-  padding:12px;overflow:auto
+/* CONTENT */
+#content{
+  flex:1;
+  display:flex;
+  gap:8px;
+  padding:8px;
+  min-height:0;
 }
-#drivers{flex:1}
-#orders{flex:1.2}
+.box{
+  background:#0f1629;
+  border:1px solid #222;
+  border-radius:14px;
+  padding:10px;
+  overflow:auto;
+}
+#drivers{flex:.9}
+#orders{flex:1.1}
 
-/* MAP */
+/* MAP PANEL */
+#mapPanel{
+  height:260px;
+  margin:8px;
+  background:#0f1629;
+  border:1px solid #222;
+  border-radius:14px;
+  display:flex;
+  flex-direction:column;
+}
+#mapHeader{
+  padding:6px 10px;
+  border-bottom:1px solid #222;
+  font-size:13px;
+}
 #map{
-  height:34vh;margin:10px;border-radius:14px;border:1px solid #222
+  flex:1;
 }
 
 /* VEHICLE ICON */
 .vehicle{
-  width:28px;height:28px;
+  width:28px;
+  height:28px;
   background:#39ff14;
   mask:url("https://www.svgrepo.com/show/475656/truck.svg") center/contain no-repeat;
   -webkit-mask:url("https://www.svgrepo.com/show/475656/truck.svg") center/contain no-repeat;
   filter:drop-shadow(0 0 8px #39ff14);
-  transition:transform .2s linear
 }
 </style>
 </head>
@@ -107,7 +168,12 @@ body{
 
   <div id="topbar">
     <div id="logo"><span>S</span>-TRANS</div>
-    <button onclick="logout()" style="background:#ff4444;border:none;padding:6px 12px;color:#fff">Wyloguj</button>
+    <div id="actions">
+      <button class="actionBtn" onclick="centerFleet()">Centruj flotę</button>
+      <button class="actionBtn" onclick="resetRoutes()">Reset tras</button>
+      <button class="actionBtn" onclick="refreshData()">Odśwież</button>
+      <button class="actionBtn" onclick="logout()" style="border-color:#ff5555;color:#ff5555">Wyloguj</button>
+    </div>
   </div>
 
   <div id="kpi">
@@ -116,36 +182,37 @@ body{
     <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
   </div>
 
-  <div id="main">
-    <div class="box" id="drivers"><h3>Kierowcy (ETA / km / km/h)</h3><div id="driversList"></div></div>
+  <div id="content">
+    <div class="box" id="drivers"><h3>Kierowcy</h3><div id="driversList"></div></div>
     <div class="box" id="orders"><h3>Zlecenia</h3><table id="ordersTable"></table></div>
   </div>
 
-  <div id="map"></div>
+  <div id="mapPanel">
+    <div id="mapHeader">Mapa floty – LIVE TRACKING</div>
+    <div id="map"></div>
+  </div>
+
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
-/* INTRO */
 setTimeout(()=>{
   document.getElementById("intro").style.display="none";
   document.getElementById("login").style.display="flex";
 },3000);
 
-/* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
   authDomain:"fir-trans-projekt.firebaseapp.com",
   databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:"fir-trans-projekt"
 });
+
 const auth=firebase.auth();
 const db=firebase.database();
+let map,markers={},routes={};
 
-let map,markers={},routes={},stats={};
-
-/* LOGIN */
 loginBtn.onclick=()=>{
   auth.signInWithEmailAndPassword(email.value,password.value)
   .then(()=>{
@@ -157,54 +224,25 @@ loginBtn.onclick=()=>{
   })
   .catch(e=>loginError.innerText=e.message);
 };
+
 window.logout=()=>auth.signOut().then(()=>location.reload());
 
-/* MAP */
 function initMap(){
   map=L.map("map").setView([53.4,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 }
 
-/* DISTANCE */
-function km(a,b){
-  const R=6371;
-  const dLat=(b[0]-a[0])*Math.PI/180;
-  const dLng=(b[1]-a[1])*Math.PI/180;
-  const s=Math.sin(dLat/2)**2+
-    Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*
-    Math.sin(dLng/2)**2;
-  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
-}
-
-/* DRIVERS */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
-    let total=0,online=0;
-
+    let t=0,o=0;
     snap.forEach(d=>{
-      total++;
+      t++;
       const v=d.val(),id=d.key;
-      if(v.status==="online") online++;
+      if(v.status==="online") o++;
+      driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
       if(!v.lat||!v.lng) return;
-
       const pos=[v.lat,v.lng];
-      if(!stats[id]) stats[id]={km:0,last:pos,time:Date.now()};
-
-      const dist=km(stats[id].last,pos);
-      const dt=(Date.now()-stats[id].time)/3600000;
-      const speed=dt>0?(dist/dt):0;
-      stats[id].km+=dist;
-      stats[id].last=pos;
-      stats[id].time=Date.now();
-
-      const eta=speed>0?(120/speed):0;
-
-      driversList.innerHTML+=`
-        🚚 ${v.name||id}<br>
-        <small>km: ${stats[id].km.toFixed(1)} | km/h: ${speed.toFixed(1)} | ETA: ${eta.toFixed(1)}h</small><hr>
-      `;
-
       if(!markers[id]){
         const icon=L.divIcon({html:'<div class="vehicle"></div>',iconSize:[28,28]});
         markers[id]=L.marker(pos,{icon}).addTo(map);
@@ -214,26 +252,26 @@ function loadDrivers(){
         routes[id].addLatLng(pos);
       }
     });
-
-    kpiDrivers.innerText=total;
-    kpiOnline.innerText=online;
+    kpiDrivers.innerText=t;
+    kpiOnline.innerText=o;
   });
 }
 
-/* ORDERS */
 function loadOrders(){
   db.ref("orders").on("value",snap=>{
     ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
     let c=0;
     snap.forEach(o=>{
       c++;
-      ordersTable.innerHTML+=`
-        <tr><td>${o.key}</td><td>${o.val().title||""}</td><td>${o.val().status||""}</td></tr>
-      `;
+      ordersTable.innerHTML+=`<tr><td>${o.key}</td><td>${o.val().title||""}</td><td>${o.val().status||""}</td></tr>`;
     });
     kpiOrders.innerText=c;
   });
 }
+
+window.centerFleet=()=>map.fitBounds(Object.values(markers).map(m=>m.getLatLng()));
+window.resetRoutes=()=>{Object.values(routes).forEach(r=>r.setLatLngs([]));};
+window.refreshData=()=>{loadDrivers();loadOrders();};
 
 });
 </script>
