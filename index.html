@@ -21,7 +21,7 @@ body{
   color:#fff;
 }
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 #loginScreen{
   position:fixed; inset:0;
   display:flex; align-items:center; justify-content:center;
@@ -38,7 +38,7 @@ body{
   background:#39ff14; border:none; font-weight:bold; cursor:pointer;
 }
 
-/* ================= PANEL ================= */
+/* PANEL */
 #panel{
   display:none;
   height:100vh;
@@ -47,11 +47,11 @@ body{
 
 /* TOPBAR */
 #topbar{
-  height:60px;
+  height:56px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 20px;
+  padding:0 16px;
   background:rgba(10,20,40,0.9);
   backdrop-filter:blur(15px);
   border-bottom:1px solid rgba(255,255,255,0.1);
@@ -59,8 +59,8 @@ body{
 
 /* LOGO */
 #logo{
-  font-size:26px;
-  letter-spacing:4px;
+  font-size:24px;
+  letter-spacing:3px;
   font-weight:bold;
 }
 #logo .s{
@@ -74,10 +74,10 @@ body{
   to{transform:rotateY(360deg)}
 }
 
-/* TOP BUTTONS */
+/* BUTTONS */
 #topButtons button{
-  margin-left:10px;
-  padding:8px 14px;
+  margin-left:6px;
+  padding:6px 12px;
   border:none;
   border-radius:6px;
   cursor:pointer;
@@ -95,19 +95,22 @@ body{
 #dashboard{
   flex:1;
   display:flex;
-  gap:10px;
-  padding:10px;
+  gap:6px;               /* 🔥 MNIEJSZA PRZERWA */
+  padding:6px;           /* 🔥 MNIEJSZE MARGINESY */
 }
 
 /* PANELS */
 .panelBox{
-  flex:1;
   background:rgba(255,255,255,0.04);
   border:1px solid rgba(255,255,255,0.1);
   border-radius:10px;
-  padding:10px;
+  padding:8px;
   overflow:auto;
 }
+
+/* PROPORCJE */
+#driversBox{flex:0.9}
+#ordersBox{flex:1.1}
 
 /* TABLE */
 table{
@@ -115,8 +118,9 @@ table{
   border-collapse:collapse;
 }
 th,td{
-  padding:8px;
+  padding:6px;
   border-bottom:1px solid #333;
+  font-size:13px;
 }
 th{
   color:#39ff14;
@@ -127,14 +131,15 @@ tr:hover{
 .editBtn{
   background:#39ff14;
   border:none;
-  padding:4px 8px;
+  padding:3px 6px;
   cursor:pointer;
+  font-size:12px;
 }
 
 /* MAP */
 #map{
-  height:40vh;
-  margin:10px;
+  height:36vh;           /* 🔥 LEKKO MNIEJSZA */
+  margin:6px;
   border-radius:10px;
   overflow:hidden;
   border:1px solid rgba(255,255,255,0.1);
@@ -168,12 +173,12 @@ tr:hover{
   </div>
 
   <div id="dashboard">
-    <div class="panelBox">
+    <div class="panelBox" id="driversBox">
       <h3>Kierowcy</h3>
       <div id="driversList"></div>
     </div>
 
-    <div class="panelBox">
+    <div class="panelBox" id="ordersBox">
       <h3>Zlecenia</h3>
       <table id="ordersTable"></table>
     </div>
@@ -195,16 +200,15 @@ const auth=firebase.auth();
 const db=firebase.database();
 let map,markers={};
 
-/* LOGIN */
 function login(){
-  const email=document.getElementById("email").value;
+  const email=emailInput=document.getElementById("email").value;
   const pass=document.getElementById("password").value;
   const err=document.getElementById("loginError");
 
   auth.signInWithEmailAndPassword(email,pass)
     .then(()=>{
-      document.getElementById("loginScreen").style.display="none";
-      document.getElementById("panel").style.display="flex";
+      loginScreen.style.display="none";
+      panel.style.display="flex";
       initMap();loadOrders();loadDrivers();
     })
     .catch(e=>err.innerText=e.message);
@@ -214,7 +218,6 @@ function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
-/* MAP */
 function initMap(){
   map=L.map("map").setView([53.4,14.55],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
@@ -223,7 +226,6 @@ function centerMap(){
   map.setView([53.4,14.55],11);
 }
 
-/* DRIVERS */
 function loadDrivers(){
   db.ref("drivers").on("value",s=>{
     driversList.innerHTML="";
@@ -241,7 +243,6 @@ function loadDrivers(){
   });
 }
 
-/* ORDERS */
 function loadOrders(){
   ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
   db.ref("orders").on("value",s=>{
@@ -252,7 +253,12 @@ function loadOrders(){
           <td>${o.key}</td>
           <td>${o.val().title}</td>
           <td>${o.val().status||"nowe"}</td>
-          <td><button class="editBtn" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">Edytuj</button></td>
+          <td>
+            <button class="editBtn"
+              onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">
+              Edytuj
+            </button>
+          </td>
         </tr>`;
     });
   });
