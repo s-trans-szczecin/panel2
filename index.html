@@ -7,7 +7,306 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>S-TRANS | Fleet Operations</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0b0f1a;
+  color:#fff;
+}
+
+/* LOGIN */
+#loginScreen{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+#loginBox{
+  width:320px;
+  padding:40px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
+  border-radius:12px;
+}
+#loginBox input,#loginBox button{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+}
+#loginBox input{
+  background:#111;
+  border:1px solid #333;
+  color:#fff;
+}
+#loginBox button{
+  background:#39ff14;
+  border:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* PANEL */
+#panel{
+  display:none;
+  height:100vh;
+  flex-direction:column;
+}
+
+/* TOP BAR */
+#topbar{
+  height:60px;
+  background:rgba(20,30,50,0.7);
+  backdrop-filter:blur(20px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+/* LOGO */
+#logo{
+  font-size:26px;
+  letter-spacing:4px;
+}
+#logo .s{
+  color:#39ff14;
+  text-shadow:0 0 10px #39ff14,0 0 30px #39ff14;
+  animation:spin 8s linear infinite;
+  display:inline-block;
+}
+@keyframes spin{
+  from{transform:rotateY(0deg);}
+  to{transform:rotateY(360deg);}
+}
+
+button.main{
+  background:linear-gradient(135deg,#39ff14,#1fae0a);
+  border:none;
+  padding:8px 14px;
+  cursor:pointer;
+  font-weight:bold;
+  border-radius:6px;
+}
+button.warn{
+  background:#ff3b3b;
+  border:none;
+  padding:8px 14px;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* DASHBOARD */
+#dashboard{
+  display:flex;
+  padding:10px;
+  gap:10px;
+  height:45%;
+}
+.panelBox{
+  flex:1;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;
+  padding:10px;
+  overflow:auto;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #333;
+}
+th{
+  color:#39ff14;
+}
+tr:hover{
+  background:rgba(57,255,20,0.08);
+}
+.editBtn{
+  background:#39ff14;
+  border:none;
+  padding:4px 8px;
+  cursor:pointer;
+}
+
+/* MAP */
+#mapContainer{
+  height:45%;
+  margin:10px;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.1);
+}
+#map{height:100%}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div id="loginBox">
+    <h2>Panel administracyjny</h2>
+    <input id="email" placeholder="email">
+    <input id="password" type="password" placeholder="hasło">
+    <button onclick="login()">Zaloguj</button>
+    <p id="loginError" style="color:red"></p>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+
+  <div id="topbar">
+    <div id="logo"><span class="s">S</span>-TRANS</div>
+    <button class="warn" onclick="logout()">Wyloguj</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+
+    <div class="panelBox">
+      <h3>Kierowcy</h3>
+      <div id="driversList"></div>
+    </div>
+
+    <div class="panelBox">
+      <h3>Zlecenia</h3>
+      <button class="main" onclick="newOrder()">+ Nowe</button>
+      <table id="ordersTable"></table>
+    </div>
+
+  </div>
+
+  <!-- MAP -->
+  <div id="mapContainer">
+    <div id="map"></div>
+  </div>
+
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+  authDomain:"fir-trans-projekt.firebaseapp.com",
+  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"fir-trans-projekt"
+});
+const auth=firebase.auth();
+const db=firebase.database();
+
+let map,markers={};
+
+function login(){
+  auth.signInWithEmailAndPassword(email.value,password.value)
+  .then(res=>{
+    db.ref("users/"+res.user.uid).once("value").then(s=>{
+      if(s.val()?.role!=="admin"){alert("Brak uprawnień");return;}
+      loginScreen.style.display="none";
+      panel.style.display="flex";
+      initMap();loadDrivers();loadOrders();
+    });
+  }).catch(e=>loginError.innerText=e.message);
+}
+
+function logout(){
+  auth.signOut().then(()=>{
+    panel.style.display="none";
+    loginScreen.style.display="flex";
+  });
+}
+
+function initMap(){
+  map=L.map("map").setView([53.4285,14.5528],11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+}
+
+function smoothMove(marker,from,to){
+  let i=0,steps=20;
+  let lat=(to[0]-from[0])/steps;
+  let lng=(to[1]-from[1])/steps;
+  let int=setInterval(()=>{
+    if(i>=steps){clearInterval(int);return;}
+    marker.setLatLng([from[0]+lat*i,from[1]+lng*i]);i++;
+  },100);
+}
+
+function loadDrivers(){
+  db.ref("drivers").on("value",snap=>{
+    driversList.innerHTML="";
+    snap.forEach(d=>{
+      const v=d.val(),id=d.key;
+      if(!v.lat||!v.lng)return;
+
+      const div=document.createElement("div");
+      div.innerHTML=`<b>${v.name||id}</b><br>Status: ${v.status||"moving"}`;
+      div.style.cursor="pointer";
+      div.onclick=()=>map.setView([v.lat,v.lng],14);
+      driversList.appendChild(div);
+
+      if(!markers[id]){
+        markers[id]=L.marker([v.lat,v.lng]).addTo(map);
+        markers[id].last=[v.lat,v.lng];
+      }else{
+        smoothMove(markers[id],markers[id].last,[v.lat,v.lng]);
+        markers[id].last=[v.lat,v.lng];
+      }
+    });
+  });
+}
+
+function loadOrders(){
+  ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
+  db.ref("orders").on("value",snap=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
+    snap.forEach(o=>{
+      const r=ordersTable.insertRow();
+      r.innerHTML=`
+        <td>${o.key}</td>
+        <td>${o.val().title}</td>
+        <td>${o.val().status}</td>
+        <td><button class="editBtn" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status}')">Edytuj</button></td>
+      `;
+    });
+  });
+}
+
+function newOrder(){
+  const t=prompt("Tytuł zlecenia");
+  if(t) db.ref("orders").push({title:t,status:"nowe"});
+}
+
+function editOrder(id,title,status){
+  const nt=prompt("Tytuł:",title);
+  const ns=prompt("Status:",status);
+  if(nt&&ns) db.ref("orders/"+id).update({title:nt,status:ns});
+}
+</script>
+
+</body>
+</html>
+www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
