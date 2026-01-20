@@ -219,15 +219,38 @@ const db=firebase.database();
 let map,markers={};
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value,password.value)
-  .then(res=>{
-    db.ref("users/"+res.user.uid).once("value").then(s=>{
-      if(s.val()?.role!=="admin"){alert("Brak uprawnień");return;}
-      loginScreen.style.display="none";
-      panel.style.display="flex";
-      initMap();loadDrivers();loadOrders();
+  const emailInput = document.getElementById("email");
+  const passInput  = document.getElementById("password");
+  const errorBox   = document.getElementById("loginError");
+
+  const email = emailInput.value.trim();
+  const password = passInput.value.trim();
+
+  if(!email || !password){
+    errorBox.innerText = "Podaj email i hasło";
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then(res=>{
+      db.ref("users/"+res.user.uid).once("value").then(snap=>{
+        if(!snap.exists() || snap.val().role !== "admin"){
+          alert("Brak uprawnień ADMIN");
+          auth.signOut();
+          return;
+        }
+
+        document.getElementById("loginScreen").style.display="none";
+        document.getElementById("panel").style.display="flex";
+
+        initMap();
+        loadDrivers();
+        loadOrders();
+      });
+    })
+    .catch(err=>{
+      errorBox.innerText = err.message;
     });
-  }).catch(e=>loginError.innerText=e.message);
 }
 
 function logout(){
