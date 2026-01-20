@@ -14,24 +14,51 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
+body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff;overflow:hidden}
+
+/* INTRO VIDEO */
+#introScreen{
+  position:fixed;
+  inset:0;
+  background:black;
+  z-index:2000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#introScreen video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
 
 /* LOGIN */
 #loginScreen{
-  position:fixed;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  background:#000;z-index:1000
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+  z-index:1000
 }
 #loginBox{
-  width:320px;padding:30px;
-  background:#111;border-radius:14px;
+  width:320px;
+  padding:30px;
+  background:#111;
+  border-radius:14px;
   box-shadow:0 0 40px #39ff14
 }
 #loginBox input,#loginBox button{
-  width:100%;padding:10px;margin-top:10px
+  width:100%;
+  padding:10px;
+  margin-top:10px
 }
 #loginBox button{
-  background:#39ff14;border:none;font-weight:bold;cursor:pointer
+  background:#39ff14;
+  border:none;
+  font-weight:bold;
+  cursor:pointer
 }
 
 /* PANEL */
@@ -40,13 +67,17 @@ body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
 /* TOPBAR */
 #topbar{
   height:56px;
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   padding:0 16px;
   background:rgba(10,20,40,.95);
   border-bottom:1px solid rgba(255,255,255,.1)
 }
 #logo{
-  font-size:26px;font-weight:900;letter-spacing:4px
+  font-size:26px;
+  font-weight:900;
+  letter-spacing:4px
 }
 #logo .s{
   color:#39ff14;
@@ -59,25 +90,19 @@ body{margin:0;font-family:Arial;background:#0b0f1a;color:#fff}
   to{transform:rotateY(360deg)}
 }
 
-/* BUTTONS */
-#topButtons button{
-  margin-left:6px;padding:6px 12px;
-  border:none;border-radius:6px;
-  font-weight:bold;cursor:pointer
-}
-.btn-main{background:linear-gradient(135deg,#39ff14,#1faa0a)}
-.btn-warn{background:#ff3b3b;color:#fff}
-
 /* KPI */
 #kpiBar{
-  display:flex;gap:8px;padding:6px
+  display:flex;
+  gap:8px;
+  padding:6px
 }
 .kpi{
   flex:1;
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.1);
   border-radius:12px;
-  padding:10px;text-align:center
+  padding:10px;
+  text-align:center
 }
 .kpi b{font-size:22px;color:#39ff14}
 
@@ -108,8 +133,10 @@ th,td{
 th{color:#39ff14}
 tr:hover{background:rgba(57,255,20,.08)}
 .editBtn{
-  background:#39ff14;border:none;
-  padding:3px 6px;cursor:pointer
+  background:#39ff14;
+  border:none;
+  padding:3px 6px;
+  cursor:pointer
 }
 .eta{color:#39ff14;font-size:12px}
 
@@ -124,7 +151,8 @@ tr:hover{background:rgba(57,255,20,.08)}
 
 /* TRUCK ICON */
 .truck-icon{
-  width:32px;height:32px;
+  width:32px;
+  height:32px;
   background:url('https://cdn-icons-png.flaticon.com/512/743/743131.png') no-repeat center;
   background-size:contain;
   transform-origin:center
@@ -133,6 +161,13 @@ tr:hover{background:rgba(57,255,20,.08)}
 </head>
 
 <body>
+
+<!-- INTRO -->
+<div id="introScreen">
+  <video id="introVideo" autoplay muted playsinline>
+    <source src="intro.mp4" type="video/mp4">
+  </video>
+</div>
 
 <!-- LOGIN -->
 <div id="loginScreen">
@@ -150,11 +185,9 @@ tr:hover{background:rgba(57,255,20,.08)}
 
   <div id="topbar">
     <div id="logo"><span class="s">S</span>-TRANS</div>
-    <div id="topButtons">
-      <button class="btn-main" onclick="startDemo()">▶ DEMO</button>
-      <button class="btn-main" onclick="stopDemo()">⏸ STOP</button>
-      <button class="btn-main" onclick="newOrder()">+ Zlecenie</button>
-      <button class="btn-warn" onclick="logout()">Wyloguj</button>
+    <div>
+      <button class="editBtn" onclick="newOrder()">+ Zlecenie</button>
+      <button class="editBtn" style="background:#ff3b3b" onclick="logout()">Wyloguj</button>
     </div>
   </div>
 
@@ -181,6 +214,16 @@ tr:hover{background:rgba(57,255,20,.08)}
 </div>
 
 <script>
+/* INTRO CONTROL – 3 SEKUNDY */
+window.onload=()=>{
+  const v=document.getElementById("introVideo");
+  setTimeout(()=>{
+    v.pause();
+    document.getElementById("introScreen").style.display="none";
+    document.getElementById("loginScreen").style.display="flex";
+  },3000);
+};
+
 /* FIREBASE */
 firebase.initializeApp({
   apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
@@ -191,7 +234,7 @@ firebase.initializeApp({
 const auth=firebase.auth();
 const db=firebase.database();
 
-let map, markers={}, routes={}, demoInterval=null;
+let map,markers={},routes={};
 
 /* LOGIN */
 function login(){
@@ -205,7 +248,9 @@ function login(){
     })
     .catch(e=>loginError.innerText=e.message);
 }
-function logout(){auth.signOut().then(()=>location.reload())}
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
 
 /* MAP */
 function initMap(){
@@ -225,19 +270,7 @@ function smoothMove(marker,from,to){
   },70);
 }
 
-/* ETA */
-function calcETA(lat1,lng1,lat2,lng2){
-  const R=6371;
-  const dLat=(lat2-lat1)*Math.PI/180;
-  const dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+
-    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
-    Math.sin(dLng/2)**2;
-  const d=2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-  return Math.round((d/70)*60);
-}
-
-/* DRIVERS + TRACKING */
+/* DRIVERS */
 function loadDrivers(){
   db.ref("drivers").on("value",snap=>{
     driversList.innerHTML="";
@@ -265,9 +298,6 @@ function loadDrivers(){
         smoothMove(markers[id],markers[id].last,pos);
         markers[id].last=pos;
         routes[id].addLatLng(pos);
-        if(routes[id].getLatLngs().length>50){
-          routes[id].setLatLngs(routes[id].getLatLngs().slice(-50));
-        }
       }
 
       if(v.heading){
@@ -284,21 +314,15 @@ function loadDrivers(){
 /* ORDERS */
 function loadOrders(){
   db.ref("orders").on("value",snap=>{
-    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>ETA</th><th></th></tr>";
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th></th></tr>";
     let count=0;
     snap.forEach(o=>{
       count++;
-      let eta="--";
-      if(o.val().driverId && markers[o.val().driverId]){
-        const p=markers[o.val().driverId].last;
-        eta=calcETA(p[0],p[1],53.4,14.55)+" min";
-      }
       ordersTable.innerHTML+=`
         <tr>
           <td>${o.key}</td>
           <td>${o.val().title}</td>
           <td>${o.val().status||"nowe"}</td>
-          <td class="eta">${eta}</td>
           <td>
             <button class="editBtn"
             onclick="editOrder('${o.key}','${o.val().title}','${o.val().status||"nowe"}')">
@@ -309,7 +333,6 @@ function loadOrders(){
     kpiOrders.innerText=count;
   });
 }
-
 function newOrder(){
   const t=prompt("Tytuł zlecenia");
   if(t) db.ref("orders").push({title:t,status:"nowe"});
@@ -318,28 +341,6 @@ function editOrder(id,t,s){
   const nt=prompt("Tytuł",t);
   const ns=prompt("Status",s);
   if(nt&&ns) db.ref("orders/"+id).update({title:nt,status:ns});
-}
-
-/* DEMO MODE */
-function startDemo(){
-  if(demoInterval) return;
-  demoInterval=setInterval(()=>{
-    Object.keys(markers).forEach(id=>{
-      const p=markers[id].last;
-      db.ref("drivers/"+id).update({
-        lat:p[0]+(Math.random()-0.5)*0.002,
-        lng:p[1]+(Math.random()-0.5)*0.002,
-        speed:Math.floor(Math.random()*40+50),
-        heading:Math.floor(Math.random()*360),
-        status:"online",
-        lastUpdate:Date.now()
-      });
-    });
-  },3000);
-}
-function stopDemo(){
-  clearInterval(demoInterval);
-  demoInterval=null;
 }
 </script>
 
