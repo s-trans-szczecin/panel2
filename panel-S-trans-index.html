@@ -4,12 +4,10 @@
 <meta charset="UTF-8">
 <title>S-TRANS | Fleet Management</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -29,118 +27,112 @@ body{
 /* LOGIN */
 #login{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000}
 #loginBox{
-  width:300px;
+  width:280px;
   background:#111;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 0 30px #39ff14;
+  padding:16px;
+  border-radius:10px;
+  box-shadow:0 0 25px #39ff14;
 }
-#loginBox h2{margin:0 0 8px;text-align:center;font-size:18px}
+#loginBox h2{margin:0 0 6px;font-size:16px;text-align:center}
 #loginBox input,#loginBox button{
   width:100%;
-  padding:8px;
-  margin-top:8px;
+  padding:7px;
+  margin-top:6px;
 }
-#loginBox button{
-  background:#39ff14;
-  border:none;
-  font-weight:700;
-}
+#loginBox button{background:#39ff14;border:none;font-weight:700}
 
 /* PANEL */
 #panel{display:none;height:100vh;flex-direction:column}
 
 /* TOPBAR */
 #topbar{
-  height:48px;
+  height:44px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 12px;
+  padding:0 10px;
   background:#0a1428;
   border-bottom:1px solid #222;
 }
-#logo{
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:3px;
-}
-#logo span{
-  color:#39ff14;
-  animation:spin 6s linear infinite;
-}
+#logo{font-size:20px;font-weight:900;letter-spacing:3px}
+#logo span{color:#39ff14;animation:spin 6s linear infinite}
 @keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
 
 /* KPI */
-#kpi{
-  display:flex;
-  gap:4px;
-  padding:4px;
-}
+#kpi{display:flex;gap:2px;padding:2px}
 .kpi{
   flex:1;
   background:#0f1629;
   border:1px solid #222;
-  border-radius:8px;
-  padding:6px;
+  border-radius:6px;
+  padding:4px;
   text-align:center;
-  font-size:12px;
+  font-size:11px;
 }
-.kpi b{font-size:18px;color:#39ff14}
+.kpi b{font-size:16px;color:#39ff14}
 
 /* MAIN */
 #main{
   flex:1;
   display:flex;
-  gap:4px;
-  padding:4px;
+  gap:2px;
+  padding:2px;
 }
 
 /* BOXES */
 .box{
   background:#0f1629;
   border:1px solid #222;
-  border-radius:8px;
-  padding:6px;
+  border-radius:6px;
+  padding:4px;
   overflow:auto;
 }
 .box h3{
-  margin:2px 0 4px;
-  font-size:13px;
-  font-weight:600;
+  margin:0 0 2px;
+  font-size:12px;
   color:#39ff14;
 }
 
-/* ULTRA NARROW */
-#drivers{flex:0.6}
-#orders{flex:0.9}
+/* ULTRA COMPACT */
+#drivers{flex:0.55}
+#orders{flex:0.85}
 
 /* TABLE */
 table{width:100%;border-collapse:collapse}
 th,td{
-  padding:3px 5px;
+  padding:2px 4px;
   border-bottom:1px solid #333;
-  font-size:11px;
+  font-size:10.5px;
 }
 th{color:#39ff14}
 tr:hover{background:rgba(57,255,20,.08)}
 
+/* BUTTONS */
+.act{
+  background:#39ff14;
+  border:none;
+  padding:2px 5px;
+  font-size:10px;
+  cursor:pointer;
+  border-radius:4px;
+}
+.del{background:#ff4444;color:#fff}
+
 /* MAP */
 #map{
-  height:28vh;
-  margin:4px;
-  border-radius:8px;
+  height:26vh;
+  margin:2px;
+  border-radius:6px;
   border:1px solid #222;
 }
 
-/* TRUCK ICON */
+/* TRUCK */
 .truck{
-  width:22px;
-  height:22px;
+  width:20px;
+  height:20px;
   background:#39ff14;
   mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
   -webkit-mask:url("https://www.svgrepo.com/show/303239/truck.svg") center/contain no-repeat;
-  filter:drop-shadow(0 0 4px #39ff14);
 }
 </style>
 </head>
@@ -148,7 +140,7 @@ tr:hover{background:rgba(57,255,20,.08)}
 <body>
 
 <div id="intro">
-  <video id="introVideo" autoplay muted playsinline>
+  <video autoplay muted playsinline>
     <source src="intro.mp4" type="video/mp4">
   </video>
 </div>
@@ -165,135 +157,113 @@ tr:hover{background:rgba(57,255,20,.08)}
 
 <div id="panel">
 
-  <div id="topbar">
-    <div id="logo"><span>S</span>-TRANS</div>
-    <button onclick="logout()" style="background:#ff4444;border:none;padding:4px 8px;color:#fff;font-size:12px">
-      Wyloguj
-    </button>
+<div id="topbar">
+  <div id="logo"><span>S</span>-TRANS</div>
+  <button onclick="logout()" style="background:#ff4444;border:none;color:#fff;font-size:11px;padding:3px 6px">Wyloguj</button>
+</div>
+
+<div id="kpi">
+  <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
+  <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
+  <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
+</div>
+
+<div id="main">
+  <div class="box" id="drivers">
+    <h3>Kierowcy</h3>
+    <div id="driversList"></div>
   </div>
 
-  <div id="kpi">
-    <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
-    <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
-    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
+  <div class="box" id="orders">
+    <h3>Zlecenia</h3>
+    <table id="ordersTable"></table>
   </div>
+</div>
 
-  <div id="main">
-    <div class="box" id="drivers">
-      <h3>Kierowcy</h3>
-      <div id="driversList"></div>
-    </div>
-
-    <div class="box" id="orders">
-      <h3>Zlecenia</h3>
-      <table id="ordersTable"></table>
-    </div>
-  </div>
-
-  <div id="map"></div>
+<div id="map"></div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded",()=>{
+firebase.initializeApp({
+  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+  authDomain:"fir-trans-projekt.firebaseapp.com",
+  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"fir-trans-projekt"
+});
 
-  const intro=document.getElementById("intro");
-  const introVideo=document.getElementById("introVideo");
-  const login=document.getElementById("login");
-  const panel=document.getElementById("panel");
+const auth=firebase.auth();
+const db=firebase.database();
+let map,markers={};
 
-  setTimeout(()=>{
-    introVideo.pause();
-    intro.style.display="none";
-    login.style.display="flex";
-  },3000);
+setTimeout(()=>{
+  intro.style.display="none";
+  login.style.display="flex";
+},3000);
 
-  firebase.initializeApp({
-    apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
-    authDomain:"fir-trans-projekt.firebaseapp.com",
-    databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId:"fir-trans-projekt"
-  });
-
-  const auth=firebase.auth();
-  const db=firebase.database();
-  let map,markers={};
-
-  loginBtn.onclick=()=>{
-    auth.signInWithEmailAndPassword(email.value,password.value)
-    .then(()=>{
-      login.style.display="none";
-      panel.style.display="flex";
-      initMap();
-      loadDrivers();
-      loadOrders();
-    })
-    .catch(e=>loginError.innerText=e.message);
-  };
-
-  window.logout=()=>auth.signOut().then(()=>location.reload());
-
-  function initMap(){
+loginBtn.onclick=()=>{
+  auth.signInWithEmailAndPassword(email.value,password.value)
+  .then(()=>{
+    login.style.display="none";
+    panel.style.display="flex";
     map=L.map("map").setView([53.4,14.55],11);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-  }
+    loadDrivers();
+    loadOrders();
+  })
+  .catch(e=>loginError.innerText=e.message);
+};
 
-  function smooth(marker,from,to){
-    let i=0,steps=20;
-    let dLat=(to[0]-from[0])/steps;
-    let dLng=(to[1]-from[1])/steps;
-    let int=setInterval(()=>{
-      if(i>=steps){clearInterval(int);return;}
-      marker.setLatLng([from[0]+dLat*i,from[1]+dLng*i]);
-      i++;
-    },60);
-  }
+function logout(){auth.signOut().then(()=>location.reload())}
 
-  function loadDrivers(){
-    db.ref("drivers").on("value",snap=>{
-      driversList.innerHTML="";
-      let online=0,total=0;
-
-      snap.forEach(d=>{
-        total++;
-        const v=d.val(),id=d.key;
-        driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
-        if(v.status==="online") online++;
-
-        if(!v.lat||!v.lng) return;
-        const pos=[v.lat,v.lng];
-
+function loadDrivers(){
+  db.ref("drivers").on("value",snap=>{
+    driversList.innerHTML="";
+    let o=0,t=0;
+    snap.forEach(d=>{
+      t++;
+      const v=d.val(),id=d.key;
+      driversList.innerHTML+=`🚚 ${v.name||id}<br>`;
+      if(v.status==="online") o++;
+      if(v.lat&&v.lng){
+        const p=[v.lat,v.lng];
         if(!markers[id]){
-          const icon=L.divIcon({html:'<div class="truck"></div>',iconSize:[22,22]});
-          markers[id]=L.marker(pos,{icon}).addTo(map);
-          markers[id].last=pos;
-        }else{
-          smooth(markers[id],markers[id].last,pos);
-          markers[id].last=pos;
-        }
-      });
-
-      kpiDrivers.innerText=total;
-      kpiOnline.innerText=online;
+          markers[id]=L.marker(p,{icon:L.divIcon({html:'<div class="truck"></div>'})}).addTo(map);
+        }else markers[id].setLatLng(p);
+      }
     });
-  }
+    kpiDrivers.innerText=t;
+    kpiOnline.innerText=o;
+  });
+}
 
-  function loadOrders(){
-    db.ref("orders").on("value",snap=>{
-      ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th></tr>";
-      let c=0;
-      snap.forEach(o=>{
-        c++;
-        ordersTable.innerHTML+=`
-        <tr>
-          <td>${o.key}</td>
-          <td>${o.val().title||""}</td>
-          <td>${o.val().status||""}</td>
-        </tr>`;
-      });
-      kpiOrders.innerText=c;
+function loadOrders(){
+  db.ref("orders").on("value",snap=>{
+    ordersTable.innerHTML="<tr><th>ID</th><th>Tytuł</th><th>Status</th><th>Akcje</th></tr>";
+    let c=0;
+    snap.forEach(o=>{
+      c++;
+      ordersTable.innerHTML+=`
+      <tr>
+        <td>${o.key}</td>
+        <td>${o.val().title||""}</td>
+        <td>${o.val().status||""}</td>
+        <td>
+          <button class="act" onclick="editOrder('${o.key}','${o.val().status||""}')">✏️</button>
+          <button class="act del" onclick="delOrder('${o.key}')">❌</button>
+        </td>
+      </tr>`;
     });
-  }
-});
+    kpiOrders.innerText=c;
+  });
+}
+
+function editOrder(id,cur){
+  const s=prompt("Nowy status:",cur);
+  if(s) db.ref("orders/"+id).update({status:s});
+}
+function delOrder(id){
+  if(confirm("Usunąć zlecenie?")) db.ref("orders/"+id).remove();
+}
 </script>
 
 </body>
