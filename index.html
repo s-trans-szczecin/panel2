@@ -9,7 +9,221 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>S-TRANS | Fleet OS</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI;background:#0b0f1a;color:#fff;font-size:12px;overflow:hidden}
+
+/* INTRO */
+#intro{position:fixed;inset:0;background:black;z-index:3000}
+#intro video{width:100%;height:100%;object-fit:cover}
+
+/* LOGIN */
+#login{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000}
+#loginBox{width:320px;background:#111;padding:24px;border-radius:14px;box-shadow:0 0 30px #39ff14}
+#loginBox input,#loginBox button{width:100%;padding:8px;margin-top:8px}
+#loginBox button{background:#39ff14;border:none;font-weight:bold}
+
+/* PANEL */
+#panel{display:none;height:100vh;flex-direction:column}
+
+/* TOP */
+#topbar{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#0a1428}
+#logo{font-size:20px;font-weight:900;letter-spacing:3px}
+#logo span{color:#39ff14;animation:spin 8s linear infinite}
+@keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+
+/* KPI */
+#kpi{display:flex;gap:4px;padding:4px}
+.kpi{flex:1;background:#0f1629;border-radius:8px;padding:4px;text-align:center}
+.kpi b{color:#39ff14}
+
+/* MAIN */
+#main{flex:1;display:grid;grid-template-columns:1.3fr 1fr;gap:6px;padding:6px}
+
+/* BOX */
+.box{background:#0f1629;border-radius:8px;padding:6px;overflow:auto}
+h4{margin:2px 0 6px;color:#39ff14}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th,td{padding:4px;border-bottom:1px solid #333}
+th{color:#39ff14}
+button.small{font-size:11px;padding:2px 6px;border:none;border-radius:4px;cursor:pointer}
+.edit{background:#39ff14}
+.del{background:#ff4444;color:#fff}
+
+/* MAP */
+#map{height:100%;border-radius:8px}
+
+/* MODAL */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:5000}
+#modalBox{background:#111;padding:16px;border-radius:10px;width:280px}
+#modalBox input{width:100%;padding:6px;margin-top:6px}
+</style>
+</head>
+
+<body>
+
+<div id="intro">
+  <video id="introVideo" autoplay muted>
+    <source src="intro.mp4" type="video/mp4">
+  </video>
+</div>
+
+<div id="login">
+  <div id="loginBox">
+    <h3>Logowanie</h3>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Hasło">
+    <button id="loginBtn">Zaloguj</button>
+    <p id="loginError"></p>
+  </div>
+</div>
+
+<div id="panel">
+
+  <div id="topbar">
+    <div id="logo"><span>S</span>-TRANS</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="location.href='https://s-trans-szczecin.github.io/panel2/pobierz_apke.html'" class="small" style="background:#2f8cff;color:#fff">Pobierz apkę</button>
+      <button onclick="logout()" class="small del">Wyloguj</button>
+    </div>
+  </div>
+
+  <div id="kpi">
+    <div class="kpi">Zlecenia<br><b id="kpiOrders">0</b></div>
+    <div class="kpi">Kierowcy<br><b id="kpiDrivers">0</b></div>
+    <div class="kpi">Online<br><b id="kpiOnline">0</b></div>
+  </div>
+
+  <div id="main">
+
+    <div class="box">
+      <h4>📦 Zlecenia</h4>
+      <table id="ordersTable"></table>
+    </div>
+
+    <div id="map"></div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div id="modalBox">
+    <h4>Edycja zlecenia</h4>
+    <input id="editTitle" placeholder="Tytuł">
+    <input id="editStatus" placeholder="Status">
+    <button onclick="saveOrder()" class="small edit">Zapisz</button>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAqm4Z8xeZ1mYelt4giRQknCWG6RMzAs8c",
+  authDomain:"fir-trans-projekt.firebaseapp.com",
+  databaseURL:"https://fir-trans-projekt-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"fir-trans-projekt"
+});
+
+const auth=firebase.auth();
+const db=firebase.database();
+let currentOrderId=null;
+
+setTimeout(()=>{
+  intro.style.display="none";
+  login.style.display="flex";
+},4000);
+
+loginBtn.onclick=()=>{
+  auth.signInWithEmailAndPassword(email.value,password.value)
+  .then(()=>{
+    login.style.display="none";
+    panel.style.display="flex";
+    initMap();loadOrders();
+  })
+  .catch(e=>loginError.innerText=e.message);
+};
+
+function initMap(){
+  L.map("map").setView([53.4,14.55],10)
+   .addLayer(L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+}
+
+function loadOrders(){
+  db.ref("orders").on("value",snap=>{
+    ordersTable.innerHTML=
+    "<tr><th>ID</th><th>Tytuł</th><th>ID kierowcy</th><th>Status</th><th>Akcje</th></tr>";
+    let c=0;
+    snap.forEach(o=>{
+      c++;
+      ordersTable.innerHTML+=`
+      <tr>
+        <td>${o.key}</td>
+        <td>${o.val().title||""}</td>
+        <td>${o.val().driverId||""}</td>
+        <td>${o.val().status||""}</td>
+        <td>
+          <button class="small edit" onclick="editOrder('${o.key}','${o.val().title}','${o.val().status}')">✏</button>
+          <button class="small del" onclick="deleteOrder('${o.key}')">🗑</button>
+        </td>
+      </tr>`;
+    });
+    kpiOrders.innerText=c;
+  });
+}
+
+function editOrder(id,title,status){
+  currentOrderId=id;
+  editTitle.value=title;
+  editStatus.value=status;
+  modal.style.display="flex";
+}
+
+function addOrder(){
+  const id = "ZL-" + Math.floor(Math.random()*900+100);
+  db.ref("orders/"+id).set({
+    title:"Nowe zlecenie",
+    status:"Nowe",
+    driverId:""
+  });
+}
+
+function saveOrder(){
+  db.ref("orders/"+currentOrderId).update({
+    title:editTitle.value,
+    status:editStatus.value
+  });
+  modal.style.display="none";
+}
+
+function deleteOrder(id){
+  if(confirm("Usunąć zlecenie?")){
+    db.ref("orders/"+id).remove();
+  }
+}
+
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
+</script>
+
+</body>
+</html>
+.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 *{box-sizing:border-box}
